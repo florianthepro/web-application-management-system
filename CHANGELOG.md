@@ -87,3 +87,11 @@
 - Setup starts at 8099; the final login starts at a free port beginning with 8443.
 - Port selection now checks both active sockets and Apache Listen declarations.
 - Prevented duplicate Apache listeners and final-login reuse of the setup port.
+
+
+## 2.1.2 - 2026-10-18
+
+- Automatically disables stale or orphaned WAMS Apache site and port configurations.
+- Detects and quarantines duplicate WAMS Listen declarations before setup.
+- Requires a clean Apache preflight before starting installation.
+- Rolls back newly created Apache files when installation fails.

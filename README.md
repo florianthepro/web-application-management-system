@@ -4,7 +4,7 @@
 Projektname:    Web Application Management System
 Repository:     web-application-management-system
 Kurzname:       WAMS
-Version:        2.1.1
+Version:        2.1.2
 Zielsysteme:    Debian und Ubuntu Server
 Web-Stack:      Apache HTTP Server, PHP und SQLite
 Bedienmodell:   Ein Terminalbefehl, danach ausschließlich Weboberfläche
@@ -453,7 +453,7 @@ Systemprüfung
 
 ## 20. Projektstatus
 
-Version `2.1.1` enthält den temporären installationsunabhängigen Browser-Bootstrap, die bedingte Pfadauswahl, einen dauerhaften eigenen WAMS-Port sowie die optionale Verwendung der freien Ports 80 oder 443. Die bisherige Zielarchitektur, App-Trennung, Example Application und CSV-Reporting-Integration bleiben unverändert erhalten.
+Version `2.1.2` enthält den temporären installationsunabhängigen Browser-Bootstrap, die bedingte Pfadauswahl, einen dauerhaften eigenen WAMS-Port sowie die optionale Verwendung der freien Ports 80 oder 443. Die bisherige Zielarchitektur, App-Trennung, Example Application und CSV-Reporting-Integration bleiben unverändert erhalten.
 
 ## 21. Oberfläche ab Version 1.3.0
 
@@ -510,3 +510,8 @@ Die Zugriffsverwaltung trennt Benutzerkonten, direkte Tenant-Leserechte, gruppen
 ## 27. Getrennte Setup- und Betriebsports ab Version 2.1.1
 
 Der temporäre Setupserver verwendet einen freien Port ab `8099`. Die endgültige HTTPS-Anwendung verwendet unabhängig davon einen freien Port ab `8443`. Ein Port gilt für WAMS nur dann als frei, wenn weder ein laufender Prozess darauf lauscht noch bereits eine aktive oder vorhandene Apache-`Listen`-Direktive dafür besteht. Dadurch werden doppelte `Listen`-Einträge und der Apache-Fehler `Cannot define multiple Listeners on the same IP:port` vermieden.
+
+
+## 28. Bereinigung fehlgeschlagener Apache-Konfigurationen ab Version 2.1.2
+
+Vor einer neuen Installation prüft der Installer vorhandene aktivierte `wams-*.conf`- und `wams-*-port.conf`-Dateien. Verwaiste WAMS-Portkonfigurationen, fehlende DocumentRoots, fehlende Zertifikate und doppelte WAMS-`Listen`-Deklarationen werden deaktiviert und nach `/var/lib/wams-installer/quarantine` kopiert. Anschließend muss `apache2ctl configtest` erfolgreich sein, bevor das Setup startet. Bei einem Fehler der neuen Installation werden deren Apache-Dateien automatisch zurückgerollt.

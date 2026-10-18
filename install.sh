@@ -5,8 +5,53 @@ while [ "$#" -gt 0 ];do case "$1" in --repository)REPOSITORY="${2:-}";shift 2;;-
 [ "$(id -u)" -eq 0 ]||{ echo "Bitte mit sudo ausführen." >&2;exit 1; }
 [ -n "$REPOSITORY" ]||read -r -p "Git-Repository: " REPOSITORY
 command -v apt-get >/dev/null||{ echo "Debian oder Ubuntu mit APT erforderlich." >&2;exit 1; }
-BOOT="$(mktemp -d /var/tmp/wams-bootstrap.XXXXXX)";PHP_PID="";TOKEN="$(openssl rand -hex 24 2>/dev/null||date +%s%N|sha256sum|cut -d' ' -f1)"
-cleanup(){ [ -n "$PHP_PID" ]&&kill "$PHP_PID" 2>/dev/null||true;rm -rf "$BOOT";};trap cleanup EXIT INT TERM
+
+cleanup_stale_wams_apache(){
+  local changed=0 link name conf root cert portconf
+  mkdir -p /var/lib/wams-installer/quarantine
+  for link in /etc/apache2/sites-enabled/wams-*.conf;do
+    [ -L "$link" ]||continue
+    name="$(basename "$link" .conf)"
+    conf="$(readlink -f "$link" 2>/dev/null||true)"
+    [ -n "$conf" ]&&[ -f "$conf" ]||{ rm -f "$link";changed=1;continue; }
+    root="$(awk '$1=="DocumentRoot"{gsub(/\"/,"",$2);print $2;exit}' "$conf")"
+    cert="$(awk '$1=="SSLCertificateFile"{gsub(/\"/,"",$2);print $2;exit}' "$conf")"
+    if [ -z "$root" ]||[ ! -d "$root" ]||{ [ -n "$cert" ]&&[ ! -s "$cert" ];};then
+      a2dissite "$name" >/dev/null 2>&1||rm -f "$link"
+      cp -a "$conf" "/var/lib/wams-installer/quarantine/${name}.site.$(date +%s).conf"||true
+      portconf="/etc/apache2/conf-available/${name}-port.conf"
+      if [ -f "$portconf" ];then
+        a2disconf "${name}-port" >/dev/null 2>&1||rm -f "/etc/apache2/conf-enabled/${name}-port.conf"
+        cp -a "$portconf" "/var/lib/wams-installer/quarantine/${name}.port.$(date +%s).conf"||true
+      fi
+      changed=1
+    fi
+  done
+  for link in /etc/apache2/conf-enabled/wams-*-port.conf;do
+    [ -L "$link" ]||continue
+    name="$(basename "$link" -port.conf)"
+    if [ ! -e "/etc/apache2/sites-enabled/${name}.conf" ];then
+      a2disconf "${name}-port" >/dev/null 2>&1||rm -f "$link";changed=1;continue
+    fi
+    port="$(awk '$1=="Listen"{print $2;exit}' "$link"|sed 's/.*://')"
+    declarations="$(grep -RhsE '^[[:space:]]*Listen[[:space:]]+' /etc/apache2/ports.conf /etc/apache2/conf-enabled 2>/dev/null|awk '{print $2}'|sed 's/.*://'|grep -cx "$port"||true)"
+    if [ -n "$port" ]&&[ "$declarations" -gt 1 ];then
+      a2dissite "$name" >/dev/null 2>&1||true
+      a2disconf "${name}-port" >/dev/null 2>&1||rm -f "$link"
+      cp -a "/etc/apache2/conf-available/${name}-port.conf" "/var/lib/wams-installer/quarantine/${name}.duplicate-port.$(date +%s).conf" 2>/dev/null||true
+      changed=1
+    fi
+  done
+  if [ "$changed" -eq 1 ];then systemctl reload apache2 >/dev/null 2>&1||true;fi
+  if ! apache2ctl configtest >/tmp/wams-apache-preflight.log 2>&1;then
+    cat /tmp/wams-apache-preflight.log >&2
+    echo "Apache ist bereits vor der WAMS-Installation fehlerhaft. Veraltete WAMS-Konfigurationen wurden soweit sicher zuordenbar deaktiviert." >&2
+    exit 1
+  fi
+}
+if command -v apache2ctl >/dev/null 2>&1;then cleanup_stale_wams_apache;fi
+BOOT="$(mktemp -d /var/tmp/wams-bootstrap.XXXXXX)";PHP_PID="";NEW_SLUG="";APACHE_COMMITTED=0;TOKEN="$(openssl rand -hex 24 2>/dev/null||date +%s%N|sha256sum|cut -d' ' -f1)"
+cleanup(){ rc=$?;[ -n "$PHP_PID" ]&&kill "$PHP_PID" 2>/dev/null||true;if [ "$rc" -ne 0 ]&&[ -n "$NEW_SLUG" ]&&[ "$APACHE_COMMITTED" -eq 0 ];then a2dissite "$NEW_SLUG" >/dev/null 2>&1||true;a2disconf "$NEW_SLUG-port" >/dev/null 2>&1||true;rm -f "/etc/apache2/sites-available/$NEW_SLUG.conf" "/etc/apache2/conf-available/$NEW_SLUG-port.conf";systemctl daemon-reload >/dev/null 2>&1||true;fi;rm -rf "$BOOT";exit $rc;};trap cleanup EXIT INT TERM
 socket_port_free(){ ! ss -ltnH | awk '{print $4}' | grep -Eq "(:|])$1$"; }
 apache_port_declared(){ grep -RhsE '^[[:space:]]*Listen[[:space:]]+' /etc/apache2 2>/dev/null | awk '{print $2}' | sed 's/.*://' | grep -qx "$1"; }
 final_port_free(){ socket_port_free "$1" && ! apache_port_declared "$1"; }
@@ -53,7 +98,7 @@ openssl req -x509 -newkey rsa:2048 -nodes -sha256 -days 365 -config "$CERTCFG" -
 [ -s "$TARGET/state/tls/server.crt" ]&&[ -s "$TARGET/state/tls/server.key" ]||{ echo "Zertifikat konnte nicht erzeugt werden." >&2;exit 1; }
 openssl x509 -in "$TARGET/state/tls/server.crt" -noout -checkend 60 >/dev/null
 chown root:www-data "$TARGET/state/tls/server.crt" "$TARGET/state/tls/server.key";chmod 0644 "$TARGET/state/tls/server.crt";chmod 0640 "$TARGET/state/tls/server.key"
-SLUG="wams-${UUID%%-*}";CONF="/etc/apache2/sites-available/$SLUG.conf"
+SLUG="wams-${UUID%%-*}";NEW_SLUG="$SLUG";CONF="/etc/apache2/sites-available/$SLUG.conf"
 final_port_free "$APP_PORT"||{ echo "Der reservierte WAMS-Port $APP_PORT ist inzwischen belegt oder bereits in Apache konfiguriert." >&2;exit 1;}
 printf 'Listen %s\n' "$APP_PORT" > "/etc/apache2/conf-available/$SLUG-port.conf"
 sed -e "s|__PORT__|$APP_PORT|g" -e "s|__ROOT__|$TARGET|g" -e "s|__SLUG__|$SLUG|g" "$TARGET/resources/apache/site.conf.template" > "$CONF";sed -i "/ServerName/a SSLEngine on\nSSLCertificateFile $TARGET/state/tls/server.crt\nSSLCertificateKeyFile $TARGET/state/tls/server.key" "$CONF"
@@ -77,7 +122,7 @@ Unit=$SLUG-update.service
 WantedBy=timers.target
 UNIT
 systemctl daemon-reload;systemctl enable --now "$SLUG-update.timer"
-apache2ctl configtest;systemctl reload apache2
+apache2ctl configtest;systemctl reload apache2;APACHE_COMMITTED=1
 LEDGER="$TARGET/state/installation-ledger.tsv";printf 'timestamp\taction\ttarget\townership\n' > "$LEDGER";for p in "${INSTALLED[@]}";do printf '%s\tpackage.install\t%s\tcreated-by-wams\n' "$(date -u +%FT%TZ)" "$p" >> "$LEDGER";done;printf '%s\tpath.create\t%s\tcreated-by-wams\n' "$(date -u +%FT%TZ)" "$TARGET" >> "$LEDGER";chown www-data:www-data "$LEDGER";chmod 0660 "$LEDGER"
 for _ in 1 2 3 4 5;do curl -kfsS --max-time 5 "https://127.0.0.1:$APP_PORT/login" >/dev/null&&break;sleep 1;done
 curl -kfsS --max-time 5 "https://127.0.0.1:$APP_PORT/login" >/dev/null||{ echo "Start fehlgeschlagen: /var/log/apache2/$SLUG-error.log" >&2;exit 1; }
