@@ -1044,3 +1044,17 @@ Eine Version gilt erst als freigabefähig, wenn:
 Diese README beschreibt den verbindlichen Zielzustand von WAMS. Sie ist keine Behauptung, dass jeder Punkt bereits im aktuellen Quellstand umgesetzt ist.
 
 Eine Implementierung entspricht dieser Zielversion erst, wenn alle beschriebenen Funktionen vorhanden sind und die Abnahmekriterien aus Abschnitt 23 vollständig bestanden wurden.
+
+
+## 26. Launcher und privates Repository ab Version 3.1.0
+
+Der Launcher zeigt ausschließlich verwendbare App-Instanzen, blendet die Tenant-Auswahl bei weniger als zwei lesbaren Tenants aus und zeigt den aktiven Tenant einschließlich Icon kompakt im Kopf. Leere Launcher verwenden einen einzelnen neutralen Leerzustand.
+
+Unter **System → Privates Repository** kann ein HTTPS-Git-Repository mit Branch und Repository-Schlüssel hinterlegt werden. Wählbar sind `Nur AppConfig`, `Nur AppData` oder `AppConfig und AppData`. Der Schlüssel wird mit AES-256-GCM und einem installationsspezifischen 32-Byte-Schlüssel verschlüsselt gespeichert. Die Synchronisierung wird als Auftrag eingereiht und durch einen getrennten systemd-Worker ausgeführt. Der Git-Schlüssel steht nicht in der Prozessliste und wird über `GIT_ASKPASS` bereitgestellt.
+
+
+## 27. Upstream-Integration von CSV Reporting ab Version 4.0.0
+
+Während der Installation wird `https://github.com/florianthepro/csv-reporting` direkt geklont. `index.php`, `map.php`, `rules.php`, `check.php`, `auto-download.php`, README und Lizenz werden unverändert nach `applications/csv-reporting/upstream/` übernommen und der verwendete Commit in `UPSTREAM_COMMIT` festgehalten.
+
+WAMS verändert den Upstream-Code nicht. Ein Adapter stellt Authentifizierung, `use`- und `edit`-Rechte, den Instanzkontext und die Live-CSV bereit. Ein getrenntes Overlay ergänzt ausschließlich den Rückkehrbutton und passt die relativen Links und Formularziele an den WAMS-Router an. Die Remote-CSV wird nur für den aktuellen Request als `csv.csv` bereitgestellt und anschließend entfernt. Regeln und Original-Appdateien bleiben im AppData-Verzeichnis der Instanz bestehen.

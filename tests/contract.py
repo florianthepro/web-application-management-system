@@ -1,7 +1,7 @@
 from pathlib import Path
 import json,sys
 r=Path(__file__).resolve().parents[1]
-required=['install.sh','uninstall.sh','update-worker.sh','public/index.php','src/Core.php','migrations/001.sql','applications/csv-reporting/app.json','applications/csv-reporting/public/index.php']
+required=['install.sh','uninstall.sh','update-worker.sh','public/index.php','src/Core.php','migrations/001.sql','applications/csv-reporting/app.json','applications/csv-reporting/public/index.php','repository-sync-worker.php','vendor-csv-reporting.sh','applications/csv-reporting/adapter.php','applications/csv-reporting/overlay/launcher-button.php']
 errors=[f'fehlt: {x}' for x in required if not (r/x).is_file()]
 for p in r.rglob('*.json'):
  try: json.loads(p.read_text())

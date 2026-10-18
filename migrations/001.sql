@@ -8,3 +8,5 @@ CREATE TABLE IF NOT EXISTS app_instances(id TEXT PRIMARY KEY,app_id TEXT NOT NUL
 CREATE TABLE IF NOT EXISTS app_grants(id TEXT PRIMARY KEY,instance_id TEXT NOT NULL,principal_type TEXT NOT NULL CHECK(principal_type IN('user','group')),principal_id TEXT NOT NULL,permission TEXT NOT NULL CHECK(permission IN('use','edit')),created_at TEXT NOT NULL,UNIQUE(instance_id,principal_type,principal_id,permission),FOREIGN KEY(instance_id) REFERENCES app_instances(id) ON DELETE CASCADE);
 CREATE TABLE IF NOT EXISTS update_jobs(id TEXT PRIMARY KEY,target_type TEXT NOT NULL,target_id TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'queued',created_at TEXT NOT NULL,finished_at TEXT,message TEXT NOT NULL DEFAULT '');
 CREATE TABLE IF NOT EXISTS audit_log(id TEXT PRIMARY KEY,user_id TEXT,action TEXT NOT NULL,object_type TEXT NOT NULL,object_id TEXT,created_at TEXT NOT NULL,details TEXT NOT NULL DEFAULT '{}');
+CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY,value TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS repository_sync_jobs(id TEXT PRIMARY KEY,status TEXT NOT NULL DEFAULT 'queued',created_at TEXT NOT NULL,finished_at TEXT,message TEXT NOT NULL DEFAULT '');
