@@ -4,7 +4,7 @@
 Projektname:    Web Application Management System
 Repository:     web-application-management-system
 Kurzname:       WAMS
-Version:        1.3.0
+Version:        1.3.1
 Zielsysteme:    Debian und Ubuntu Server
 Web-Stack:      Apache HTTP Server, PHP und SQLite
 Bedienmodell:   Ein Terminalbefehl, danach ausschließlich Weboberfläche
@@ -453,7 +453,7 @@ Systemprüfung
 
 ## 20. Projektstatus
 
-Version `1.3.0` enthält den temporären installationsunabhängigen Browser-Bootstrap, die bedingte Pfadauswahl, einen dauerhaften eigenen WAMS-Port sowie die optionale Verwendung der freien Ports 80 oder 443. Die bisherige Zielarchitektur, App-Trennung, Example Application und CSV-Reporting-Integration bleiben unverändert erhalten.
+Version `1.3.1` enthält den temporären installationsunabhängigen Browser-Bootstrap, die bedingte Pfadauswahl, einen dauerhaften eigenen WAMS-Port sowie die optionale Verwendung der freien Ports 80 oder 443. Die bisherige Zielarchitektur, App-Trennung, Example Application und CSV-Reporting-Integration bleiben unverändert erhalten.
 
 ## 21. Oberfläche ab Version 1.3.0
 
@@ -462,3 +462,10 @@ Die Administration verwendet eine einheitliche dunkle Oberfläche für Übersich
 Neue Installationen erhalten automatisch einen freien UUID-basierten Root-Ordner unter `/opt`. Der Benutzer wird nicht nach einem Dateipfad gefragt. Setup und Anmeldung verwenden saubere Pfade ohne Setup-, Login- oder Token-Queryparameter; einzig fachlicher Kontext wie `tenant` darf in geteilten Links vorkommen. Erkannte ältere WAMS-Installationen werden im Management dauerhaft als Hinweis geführt, bis sie geprüft oder entfernt wurden.
 
 CSV Reporting bleibt eine live arbeitende WAMS-App ohne lokale CSV-Kopie und bietet globale Suche, Spaltenfilter, Sortierung, Seitenlänge und Paging.
+
+
+## 22. Einrichtung und einheitliche Oberfläche ab Version 1.3.1
+
+Die Ersteinrichtung zeigt ausschließlich Benutzername und Passwort des ersten globalen Administrators. Port, Zertifikate, Tenants, Apps und weitere Systemeinstellungen werden nach der Anmeldung im Management verwaltet. Der temporäre Einrichtungsserver verwendet einen freien Port ab `8099`. Nach dem Absenden wird derselbe Port freigegeben, Apache mit einem selbstsignierten Zertifikat gestartet und der Browser auf `/login` weitergeleitet.
+
+Setup und Login verwenden keine sichtbaren Setup-, Login- oder Token-Queryparameter. Die Oberfläche besteht aus drei klar verbundenen Bereichen: schlichte Einrichtung und Anmeldung, Tanum-inspirierter Tenant-App-Launcher sowie eine einheitliche dunkle Managementoberfläche.

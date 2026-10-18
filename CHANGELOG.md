@@ -33,3 +33,12 @@
 - New installations use automatically generated UUID root directories.
 - Removed setup and login query flags from installation URLs.
 - Added persistent management notice for detected legacy installations.
+
+## 1.3.1 - 2026-10-18
+
+- Reduced first-run setup to username and password only.
+- Reuses the temporary setup port for the final encrypted Apache service.
+- Creates a self-signed certificate during every installation.
+- Redirects the browser from setup to the clean `/login` route after restart.
+- Added clean Apache front-controller routes without setup, login or token query flags.
+- Unified setup, login, launcher and management visual language.

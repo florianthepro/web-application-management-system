@@ -2,41 +2,15 @@
 declare(strict_types=1);
 $root=__DIR__;
 $probe=json_decode((string)@file_get_contents($root.'/runtime/system-probe.json'),true)?:[];
-$error='';
-$done=is_file($root.'/runtime/request.json');
+$error='';$submitted=false;
 function h(mixed $v):string{return htmlspecialchars((string)$v,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');}
-function validatePath(string $path,bool $choiceRequired,string $defaultPath):array{
- if(!$choiceRequired&&$path!==$defaultPath)return[false,'Der Installationspfad wurde unerwartet verändert.'];
- if($path===''||$path[0]!=='/')return[false,'Der Pfad muss absolut sein.'];
- if(file_exists($path)||is_link($path))return[false,'Der Zielordner muss frei sein und darf noch nicht existieren.'];
- $parent=dirname($path);
- if(!is_dir($parent)||!is_writable($parent))return[false,'Der vorhandene Elternordner ist nicht beschreibbar.'];
- if(in_array($path,['/','/etc','/usr','/var','/var/www','/var/www/html'],true))return[false,'Dieser System- oder DocumentRoot-Pfad ist nicht zulässig.'];
- return[true,'OK'];
-}
-if($_SERVER['REQUEST_METHOD']==='POST'&&!$done){
- $choiceRequired=(bool)($probe['pathChoiceRequired']??false);
- $defaultPath=(string)($probe['defaultPath']??'/opt/wams-<uuid>');
- $path=rtrim((string)($_POST['path']??$defaultPath),'/');
- [$ok,$message]=validatePath($path,$choiceRequired,$defaultPath);
- $portMode=(string)($_POST['portMode']??'custom');
- $allowed=['custom'];
- if(!empty($probe['ports']['80']))$allowed[]='80';
- if(!empty($probe['ports']['443']))$allowed[]='443';
- if(!$ok)$error=$message;
- elseif(!in_array($portMode,$allowed,true))$error='Der gewählte Port ist nicht verfügbar.';
- elseif(strlen((string)($_POST['password']??''))<12)$error='Das Passwort muss mindestens 12 Zeichen besitzen.';
+if($_SERVER['REQUEST_METHOD']==='POST'){
+ $username=trim((string)($_POST['username']??''));$password=(string)($_POST['password']??'');
+ if($username==='')$error='Benutzername fehlt.';
+ elseif(strlen($password)<12)$error='Das Passwort muss mindestens 12 Zeichen lang sein.';
  else{
-  $request=['token'=>(string)($_POST['token']??''),'path'=>$path,'portMode'=>$portMode,'username'=>trim((string)$_POST['username']),'email'=>trim((string)$_POST['username']).'@local.invalid','passwordHash'=>password_hash((string)$_POST['password'],PASSWORD_ARGON2ID),'createdAt'=>gmdate('c')];
-  file_put_contents($root.'/runtime/request.json',json_encode($request,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES),LOCK_EX);
-  $done=true;
+  $request=['token'=>(string)($probe['installToken']??''),'username'=>$username,'email'=>$username.'@local.invalid','passwordHash'=>password_hash($password,PASSWORD_ARGON2ID),'createdAt'=>gmdate('c')];
+  file_put_contents($root.'/runtime/request.json',json_encode($request,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES),LOCK_EX);$submitted=true;
  }
 }
-?><!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WAMS Installation</title><style>body{font:15px system-ui;background:#f3f5f7;color:#15202b;margin:0}.w{max-width:900px;margin:40px auto;padding:20px}.c{background:#fff;border:1px solid #dce3e8;border-radius:14px;padding:22px;margin:16px 0}input,select,button{width:100%;padding:11px;margin:6px 0 14px;box-sizing:border-box}button{background:#1769aa;color:#fff;border:0;border-radius:8px}.ok{color:#18794e}.bad{background:#ffe8e5;padding:12px}.g{display:grid;grid-template-columns:1fr 1fr;gap:12px}code{word-break:break-all}.note{background:#eaf4ff;padding:12px;border-radius:9px}</style></head><body><main class="w"><h1>WAMS installieren</h1>
-<?php if($done):?><section class="c"><h2 class="ok">Installationsauftrag angenommen</h2><p>Der Terminalprozess richtet WAMS jetzt fertig ein, prüft Apache und testet die endgültige URL. Das Terminal beendet sich danach automatisch.</p></section>
-<?php else:?><?php if($error):?><div class="bad"><?=h($error)?></div><?php endif?>
-<section class="c"><h2>Erkannter Systemzustand</h2><div class="g"><div><strong>Apache</strong><p><?=h(($probe['apache']['installed']??false)?'vorhanden':'wurde bereitgestellt')?>, <?=h($probe['apache']['version']??'-')?></p></div><div><strong>PHP</strong><p><?=h(($probe['php']['installed']??false)?'vorhanden':'wurde bereitgestellt')?>, <?=h($probe['php']['version']??'-')?></p></div></div><p><strong>Von WAMS ergänzte Komponenten:</strong> <?=h(implode(', ',$probe['installedByWams']??[])?:'keine')?></p></section>
-<section class="c"><h2>Installation</h2><form method="post"><input type="hidden" name="token" value="<?=h($probe['installToken']??'')?>">
-<?php if(!empty($probe['pathChoiceRequired'])):?><label>Installationspfad</label><input name="path" value="<?=h($probe['suggestedPath']??'')?>" required><p class="note">Der Standardpfad ist bereits belegt. Wähle einen anderen absoluten Pfad, dessen Zielordner noch nicht existiert.</p><?php else:?><input type="hidden" name="path" value="<?=h($probe['defaultPath']??'/opt/wams-<uuid>')?>"><p class="note">Installationspfad: <code><?=h($probe['defaultPath']??'/opt/wams-<uuid>')?></code>. Die Pfadauswahl wird nur angezeigt, wenn dieser Standardpfad nicht frei ist.</p><?php endif?>
-<label>Web-Port</label><select name="portMode"><option value="custom">Eigener freier WAMS-Port, empfohlen</option><?php if(!empty($probe['ports']['80'])):?><option value="80">Port 80, derzeit frei</option><?php endif?><?php if(!empty($probe['ports']['443'])):?><option value="443">Port 443, derzeit frei, lokales Startzertifikat</option><?php endif?></select><p class="note">Standardmäßig verwendet WAMS einen freien eigenen Port ab 8088 und bleibt damit von bestehenden Websites unabhängig. 80 oder 443 werden nur angeboten, wenn sie frei sind.</p>
-<label>Benutzername des ersten globalen Administrators</label><input name="username" required><label>Passwort</label><input type="password" name="password" minlength="12" required><button>Installieren</button></form></section><?php endif?></main></body></html>
+?><!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WAMS Einrichtung</title><style>:root{--bg:#070d18;--panel:#0f1724;--line:#26354a;--text:#e6eef8;--muted:#91a4bd;--accent:#0ea5a4}*{box-sizing:border-box}html,body{margin:0;min-height:100%;font:14px Inter,system-ui;background:var(--bg);color:var(--text)}main{min-height:100vh;display:grid;place-items:center;padding:20px}.box{width:min(410px,100%);background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:28px;box-shadow:0 18px 48px #0008}h1{text-align:center;margin:0 0 8px}.sub{text-align:center;color:var(--muted);margin-bottom:24px}label{display:block;margin:13px 0 6px;font-weight:650}input{width:100%;background:#09111e;border:1px solid var(--line);color:var(--text);padding:12px;border-radius:10px}button{width:100%;margin-top:18px;border:0;border-radius:10px;background:var(--accent);color:#fff;padding:12px;font-weight:750;cursor:pointer}.error{background:#3b1117;border:1px solid #7f1d1d;color:#fecaca;padding:12px;border-radius:10px}.spinner{width:34px;height:34px;border:3px solid #ffffff22;border-top-color:var(--accent);border-radius:50%;animation:s 1s linear infinite;margin:22px auto}@keyframes s{to{transform:rotate(360deg)}}</style></head><body><main><section class="box"><h1>WAMS</h1><p class="sub">Ersten globalen Administrator anlegen</p><?php if($error):?><div class="error"><?=h($error)?></div><?php endif?><?php if($submitted):?><div class="spinner"></div><p style="text-align:center">WAMS wird eingerichtet und anschließend neu gestartet.</p><script>const target='https://'+location.hostname+':<?=h($probe['finalPort']??8099)?>/login';setTimeout(()=>location.replace(target),5000);</script><?php else:?><form method="post"><label>Benutzername</label><input name="username" autocomplete="username" required autofocus><label>Passwort</label><input type="password" name="password" minlength="12" autocomplete="new-password" required><button>Einrichtung abschließen</button></form><?php endif?></section></main></body></html>

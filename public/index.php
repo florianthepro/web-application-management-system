@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 require dirname(__DIR__).'/src/Core.php';use Wams\Core;
-session_name('WAMSSESSID');session_start(['cookie_httponly'=>true,'cookie_samesite'=>'Lax','cookie_secure'=>isset($_SERVER['HTTPS'])]);$c=new Core();$page=(string)($_GET['page']??'launcher');$error='';
+session_name('WAMSSESSID');session_start(['cookie_httponly'=>true,'cookie_samesite'=>'Lax','cookie_secure'=>isset($_SERVER['HTTPS'])]);$c=new Core();$path=trim((string)parse_url($_SERVER['REQUEST_URI']??'/',PHP_URL_PATH),'/');$page=(string)($_GET['page']??($path==='login'?'login':'launcher'));$error='';
 function h(mixed $v):string{return htmlspecialchars((string)$v,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');}function redirect(string $url):never{header('Location:'.$url);exit;}
 try{
  if(!$c->installed())throw new RuntimeException('Installation nicht abgeschlossen.');

@@ -13,7 +13,7 @@ final class Core{
  public function check():void{if(!hash_equals((string)($_SESSION['csrf']??''),(string)($_POST['csrf']??'')))throw new RuntimeException('CSRF-Prüfung fehlgeschlagen.');}
  public function user():?array{if(empty($_SESSION['uid']))return null;$q=$this->db->prepare('SELECT * FROM users WHERE id=? AND active=1');$q->execute([$_SESSION['uid']]);return $q->fetch()?:null;}
  public function login(string $l,string $p):bool{$q=$this->db->prepare('SELECT * FROM users WHERE username=? OR email=?');$q->execute([$l,$l]);$u=$q->fetch();if(!$u||!password_verify($p,$u['password_hash']))return false;session_regenerate_id(true);$_SESSION['uid']=$u['id'];return true;}
- public function requireUser():array{$u=$this->user();if(!$u){header('Location:?p=login');exit;}return $u;}
+ public function requireUser():array{$u=$this->user();if(!$u){header('Location:/login');exit;}return $u;}
  public function tenants(array $u):array{if($u['is_global'])return $this->db->query('SELECT * FROM tenants ORDER BY name')->fetchAll();$q=$this->db->prepare('SELECT t.* FROM tenants t JOIN user_tenants x ON x.tenant_id=t.id WHERE x.user_id=?');$q->execute([$u['id']]);return $q->fetchAll();}
  public function canTenant(array $u,string $tid):bool{if($u['is_global'])return true;$q=$this->db->prepare('SELECT 1 FROM user_tenants WHERE user_id=? AND tenant_id=?');$q->execute([$u['id'],$tid]);return (bool)$q->fetchColumn();}
  public function manifest(string $id):array{$f=$this->cfg['apps'].'/'.basename($id).'/app.json';$a=is_file($f)?json_decode((string)file_get_contents($f),true):null;if(!is_array($a))throw new RuntimeException('App fehlt.');return $a;}
