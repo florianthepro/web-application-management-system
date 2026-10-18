@@ -12,25 +12,26 @@ BEFORE_APACHE=false;BEFORE_PHP=false;command -v apache2 >/dev/null&&BEFORE_APACH
 MISSING=();command -v git >/dev/null||MISSING+=(git);command -v php >/dev/null||MISSING+=(php-cli);command -v apache2 >/dev/null||MISSING+=(apache2 libapache2-mod-php);php -m 2>/dev/null|grep -qi '^pdo_sqlite$'||MISSING+=(php-sqlite3);php -m 2>/dev/null|grep -qi '^openssl$'||MISSING+=(php-common)
 INSTALLED=();if [ "${#MISSING[@]}" -gt 0 ];then echo "Fehlende Komponenten: ${MISSING[*]}";apt-get update;apt-get install -y --no-install-recommends "${MISSING[@]}";INSTALLED=("${MISSING[@]}");else echo "Apache, PHP, Git und SQLite-Unterstützung sind vollständig vorhanden.";fi
 GIT_TERMINAL_PROMPT=0 git clone --depth 1 "$REPOSITORY" "$BOOT/repo"
+LEGACY_JSON="$(find /opt /var/www -maxdepth 3 -type f -name database.sqlite -path "*/state/*" -printf '%h\n' 2>/dev/null | sed 's#/state$##' | php -r '$a=[];while(($l=fgets(STDIN))!==false){$l=trim($l);if($l!=="")$a[]=["path"=>$l,"status"=>"legacy"]; }echo json_encode($a,JSON_UNESCAPED_SLASHES);' )"
 mkdir -p "$BOOT/repo/runtime"
 APACHE_VERSION="$(apache2 -v 2>/dev/null|head -n1||true)";PHP_VERSION="$(php -r 'echo PHP_VERSION;' 2>/dev/null||true)"
-DEFAULT_PATH="/opt/web-application-management-system";PATH_REQUIRED=false;SUGGESTED="$DEFAULT_PATH"
-if [ -e "$DEFAULT_PATH" ];then PATH_REQUIRED=true;BASE="/opt";SUGGESTED="$BASE/web-application-management-system-2";i=3;while [ -e "$SUGGESTED" ];do SUGGESTED="$BASE/web-application-management-system-$i";i=$((i+1));done;fi
+APP_UUID="$(cat /proc/sys/kernel/random/uuid)";DEFAULT_PATH="/opt/wams-$APP_UUID";while [ -e "$DEFAULT_PATH" ];do APP_UUID="$(cat /proc/sys/kernel/random/uuid)";DEFAULT_PATH="/opt/wams-$APP_UUID";done;PATH_REQUIRED=false;SUGGESTED="$DEFAULT_PATH"
 port_free(){ ! ss -ltnH|awk '{print $4}'|grep -Eq "(:|])$1$"; }
 FREE80=false;FREE443=false;port_free 80&&FREE80=true;port_free 443&&FREE443=true
-export PROBE_FILE="$BOOT/repo/runtime/system-probe.json" BEFORE_APACHE BEFORE_PHP APACHE_VERSION PHP_VERSION DEFAULT_PATH PATH_REQUIRED SUGGESTED FREE80 FREE443
+export PROBE_FILE="$BOOT/repo/runtime/system-probe.json" BEFORE_APACHE BEFORE_PHP APACHE_VERSION PHP_VERSION DEFAULT_PATH PATH_REQUIRED SUGGESTED FREE80 FREE443 TOKEN
 export INSTALLED_LINES="$(printf '%s\n' "${INSTALLED[@]}")"
-php -r '$installed=array_values(array_filter(preg_split("/\\R/",getenv("INSTALLED_LINES"))));$x=["apache"=>["installed"=>getenv("BEFORE_APACHE")==="true","version"=>getenv("APACHE_VERSION")],"php"=>["installed"=>getenv("BEFORE_PHP")==="true","version"=>getenv("PHP_VERSION")],"installedByWams"=>$installed,"defaultPath"=>getenv("DEFAULT_PATH"),"pathChoiceRequired"=>getenv("PATH_REQUIRED")==="true","suggestedPath"=>getenv("SUGGESTED"),"ports"=>["80"=>getenv("FREE80")==="true","443"=>getenv("FREE443")==="true"]];file_put_contents(getenv("PROBE_FILE"),json_encode($x,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));'
+php -r '$installed=array_values(array_filter(preg_split("/\\R/",getenv("INSTALLED_LINES"))));$x=["apache"=>["installed"=>getenv("BEFORE_APACHE")==="true","version"=>getenv("APACHE_VERSION")],"php"=>["installed"=>getenv("BEFORE_PHP")==="true","version"=>getenv("PHP_VERSION")],"installedByWams"=>$installed,"defaultPath"=>getenv("DEFAULT_PATH"),"pathChoiceRequired"=>getenv("PATH_REQUIRED")==="true","suggestedPath"=>getenv("SUGGESTED"),"ports"=>["80"=>getenv("FREE80")==="true","443"=>getenv("FREE443")==="true"],"installToken"=>getenv("TOKEN")];file_put_contents(getenv("PROBE_FILE"),json_encode($x,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));'
 while ! port_free "$BOOT_PORT";do BOOT_PORT=$((BOOT_PORT+1));done
 php -S "0.0.0.0:$BOOT_PORT" -t "$BOOT/repo" "$BOOT/repo/bootstrap.php" >"$BOOT/php-server.log" 2>&1 & PHP_PID=$!
 sleep 1;kill -0 "$PHP_PID" 2>/dev/null||{ cat "$BOOT/php-server.log";exit 1; }
-curl -fsS --max-time 5 "http://127.0.0.1:$BOOT_PORT/?token=$TOKEN" >/dev/null||{ echo "Bootstrap-Selbsttest fehlgeschlagen:";cat "$BOOT/php-server.log";exit 1; }
-IP="$(hostname -I|awk '{print $1}')";echo;echo "System erkannt und protokolliert. Browserinstallation: http://$IP:$BOOT_PORT/?token=$TOKEN";echo "Terminal bitte geöffnet lassen."
+curl -fsS --max-time 5 "http://127.0.0.1:$BOOT_PORT/" >/dev/null||{ echo "Bootstrap-Selbsttest fehlgeschlagen:";cat "$BOOT/php-server.log";exit 1; }
+IP="$(hostname -I|awk '{print $1}')";echo;echo "System erkannt und protokolliert. Browserinstallation: http://$IP:$BOOT_PORT/";echo "Terminal bitte geöffnet lassen."
 REQ="$BOOT/repo/runtime/request.json";while [ ! -f "$REQ" ];do kill -0 "$PHP_PID" 2>/dev/null||{ cat "$BOOT/php-server.log";exit 1;};sleep 2;done
 readarray -t V < <(php -r '$x=json_decode(file_get_contents($argv[1]),true);foreach(["token","path","portMode","username","email","passwordHash"] as $k)echo base64_encode($x[$k]??"")."\n";' "$REQ")
 dec(){ printf '%s' "$1"|base64 -d; };RTOKEN="$(dec "${V[0]}")";TARGET="$(dec "${V[1]}")";PORT_MODE="$(dec "${V[2]}")";USER_NAME="$(dec "${V[3]}")";EMAIL="$(dec "${V[4]}")";HASH="$(dec "${V[5]}")"
 [ "$RTOKEN" = "$TOKEN" ]||{ echo "Ungültiger Installationstoken." >&2;exit 1; };[[ "$TARGET" = /* ]]||exit 1;[ ! -e "$TARGET" ]||{ echo "Ziel existiert inzwischen." >&2;exit 1; };[ -d "$(dirname "$TARGET")" ]||exit 1
 mkdir "$TARGET";cp -a "$BOOT/repo/." "$TARGET/";rm -f "$TARGET/bootstrap.php" "$TARGET/runtime/request.json";mkdir -p "$TARGET/state" "$TARGET/runtime" "$TARGET/backups" "$TARGET/exports"
+printf '%s' "$LEGACY_JSON" > "$TARGET/state/legacy-installations.json"
 chown -R root:www-data "$TARGET"
 find "$TARGET" -type d -exec chmod 0750 {} +
 find "$TARGET" -type f -exec chmod 0640 {} +

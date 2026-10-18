@@ -4,7 +4,7 @@
 Projektname:    Web Application Management System
 Repository:     web-application-management-system
 Kurzname:       WAMS
-Version:        1.2.2
+Version:        1.3.0
 Zielsysteme:    Debian und Ubuntu Server
 Web-Stack:      Apache HTTP Server, PHP und SQLite
 Bedienmodell:   Ein Terminalbefehl, danach ausschließlich Weboberfläche
@@ -453,4 +453,12 @@ Systemprüfung
 
 ## 20. Projektstatus
 
-Version `1.2.2` enthält den temporären installationsunabhängigen Browser-Bootstrap, die bedingte Pfadauswahl, einen dauerhaften eigenen WAMS-Port sowie die optionale Verwendung der freien Ports 80 oder 443. Die bisherige Zielarchitektur, App-Trennung, Example Application und CSV-Reporting-Integration bleiben unverändert erhalten.
+Version `1.3.0` enthält den temporären installationsunabhängigen Browser-Bootstrap, die bedingte Pfadauswahl, einen dauerhaften eigenen WAMS-Port sowie die optionale Verwendung der freien Ports 80 oder 443. Die bisherige Zielarchitektur, App-Trennung, Example Application und CSV-Reporting-Integration bleiben unverändert erhalten.
+
+## 21. Oberfläche ab Version 1.3.0
+
+Die Administration verwendet eine einheitliche dunkle Oberfläche für Übersicht, Tenants, Apps, Benutzer, Gruppen und System. Der Launcher orientiert sich am Tanum-Launcher-Kachelmodell und besitzt links oben eine Tenant-Auswahl als Overlay. App-Installationen werden ausschließlich über beschriftete GUI-Felder durchgeführt; Roh-JSON ist kein Installationsschritt mehr.
+
+Neue Installationen erhalten automatisch einen freien UUID-basierten Root-Ordner unter `/opt`. Der Benutzer wird nicht nach einem Dateipfad gefragt. Setup und Anmeldung verwenden saubere Pfade ohne Setup-, Login- oder Token-Queryparameter; einzig fachlicher Kontext wie `tenant` darf in geteilten Links vorkommen. Erkannte ältere WAMS-Installationen werden im Management dauerhaft als Hinweis geführt, bis sie geprüft oder entfernt wurden.
+
+CSV Reporting bleibt eine live arbeitende WAMS-App ohne lokale CSV-Kopie und bietet globale Suche, Spaltenfilter, Sortierung, Seitenlänge und Paging.

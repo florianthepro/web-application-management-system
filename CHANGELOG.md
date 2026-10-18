@@ -23,3 +23,13 @@
 - Writable runtime directories now belong to `www-data:www-data` with directory mode `0770` and file mode `0660`.
 - Application code remains owned by `root:www-data` and is not writable by Apache.
 - Added an explicit startup error when the state directory is not writable.
+
+## 1.3.0 - 2026-10-18
+
+- Rebuilt the administration as a consistent dark GUI.
+- Added Tanum-style tile launcher with top-left tenant overlay.
+- Replaced raw JSON app installation with visual CSV Reporting fields.
+- Restored CSV Reporting as a complete live report with search, column filters, sorting and paging.
+- New installations use automatically generated UUID root directories.
+- Removed setup and login query flags from installation URLs.
+- Added persistent management notice for detected legacy installations.

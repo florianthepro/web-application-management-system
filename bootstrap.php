@@ -16,7 +16,7 @@ function validatePath(string $path,bool $choiceRequired,string $defaultPath):arr
 }
 if($_SERVER['REQUEST_METHOD']==='POST'&&!$done){
  $choiceRequired=(bool)($probe['pathChoiceRequired']??false);
- $defaultPath=(string)($probe['defaultPath']??'/opt/web-application-management-system');
+ $defaultPath=(string)($probe['defaultPath']??'/opt/wams-<uuid>');
  $path=rtrim((string)($_POST['path']??$defaultPath),'/');
  [$ok,$message]=validatePath($path,$choiceRequired,$defaultPath);
  $portMode=(string)($_POST['portMode']??'custom');
@@ -27,7 +27,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'&&!$done){
  elseif(!in_array($portMode,$allowed,true))$error='Der gewählte Port ist nicht verfügbar.';
  elseif(strlen((string)($_POST['password']??''))<12)$error='Das Passwort muss mindestens 12 Zeichen besitzen.';
  else{
-  $request=['token'=>(string)($_POST['token']??''),'path'=>$path,'portMode'=>$portMode,'username'=>trim((string)$_POST['username']),'email'=>trim((string)$_POST['email']),'passwordHash'=>password_hash((string)$_POST['password'],PASSWORD_ARGON2ID),'createdAt'=>gmdate('c')];
+  $request=['token'=>(string)($_POST['token']??''),'path'=>$path,'portMode'=>$portMode,'username'=>trim((string)$_POST['username']),'email'=>trim((string)$_POST['username']).'@local.invalid','passwordHash'=>password_hash((string)$_POST['password'],PASSWORD_ARGON2ID),'createdAt'=>gmdate('c')];
   file_put_contents($root.'/runtime/request.json',json_encode($request,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES),LOCK_EX);
   $done=true;
  }
@@ -36,7 +36,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'&&!$done){
 <?php if($done):?><section class="c"><h2 class="ok">Installationsauftrag angenommen</h2><p>Der Terminalprozess richtet WAMS jetzt fertig ein, prüft Apache und testet die endgültige URL. Das Terminal beendet sich danach automatisch.</p></section>
 <?php else:?><?php if($error):?><div class="bad"><?=h($error)?></div><?php endif?>
 <section class="c"><h2>Erkannter Systemzustand</h2><div class="g"><div><strong>Apache</strong><p><?=h(($probe['apache']['installed']??false)?'vorhanden':'wurde bereitgestellt')?>, <?=h($probe['apache']['version']??'-')?></p></div><div><strong>PHP</strong><p><?=h(($probe['php']['installed']??false)?'vorhanden':'wurde bereitgestellt')?>, <?=h($probe['php']['version']??'-')?></p></div></div><p><strong>Von WAMS ergänzte Komponenten:</strong> <?=h(implode(', ',$probe['installedByWams']??[])?:'keine')?></p></section>
-<section class="c"><h2>Installation</h2><form method="post"><input type="hidden" name="token" value="<?=h($_GET['token']??'')?>">
-<?php if(!empty($probe['pathChoiceRequired'])):?><label>Installationspfad</label><input name="path" value="<?=h($probe['suggestedPath']??'')?>" required><p class="note">Der Standardpfad ist bereits belegt. Wähle einen anderen absoluten Pfad, dessen Zielordner noch nicht existiert.</p><?php else:?><input type="hidden" name="path" value="<?=h($probe['defaultPath']??'/opt/web-application-management-system')?>"><p class="note">Installationspfad: <code><?=h($probe['defaultPath']??'/opt/web-application-management-system')?></code>. Die Pfadauswahl wird nur angezeigt, wenn dieser Standardpfad nicht frei ist.</p><?php endif?>
+<section class="c"><h2>Installation</h2><form method="post"><input type="hidden" name="token" value="<?=h($probe['installToken']??'')?>">
+<?php if(!empty($probe['pathChoiceRequired'])):?><label>Installationspfad</label><input name="path" value="<?=h($probe['suggestedPath']??'')?>" required><p class="note">Der Standardpfad ist bereits belegt. Wähle einen anderen absoluten Pfad, dessen Zielordner noch nicht existiert.</p><?php else:?><input type="hidden" name="path" value="<?=h($probe['defaultPath']??'/opt/wams-<uuid>')?>"><p class="note">Installationspfad: <code><?=h($probe['defaultPath']??'/opt/wams-<uuid>')?></code>. Die Pfadauswahl wird nur angezeigt, wenn dieser Standardpfad nicht frei ist.</p><?php endif?>
 <label>Web-Port</label><select name="portMode"><option value="custom">Eigener freier WAMS-Port, empfohlen</option><?php if(!empty($probe['ports']['80'])):?><option value="80">Port 80, derzeit frei</option><?php endif?><?php if(!empty($probe['ports']['443'])):?><option value="443">Port 443, derzeit frei, lokales Startzertifikat</option><?php endif?></select><p class="note">Standardmäßig verwendet WAMS einen freien eigenen Port ab 8088 und bleibt damit von bestehenden Websites unabhängig. 80 oder 443 werden nur angeboten, wenn sie frei sind.</p>
-<label>Benutzername des ersten globalen Administrators</label><input name="username" required><label>E-Mail-Adresse</label><input type="email" name="email" required><label>Passwort</label><input type="password" name="password" minlength="12" required><button>Installieren</button></form></section><?php endif?></main></body></html>
+<label>Benutzername des ersten globalen Administrators</label><input name="username" required><label>Passwort</label><input type="password" name="password" minlength="12" required><button>Installieren</button></form></section><?php endif?></main></body></html>
