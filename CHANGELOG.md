@@ -42,3 +42,12 @@
 - Redirects the browser from setup to the clean `/login` route after restart.
 - Added clean Apache front-controller routes without setup, login or token query flags.
 - Unified setup, login, launcher and management visual language.
+
+## 1.4.0 - 2026-10-18
+
+- Clearly separated Launcher, Management and Admin interfaces.
+- Replaced decorative AI-like styling with a flat black, gray, white and standard-blue admin design.
+- Added conventional yellow warnings, red errors and critical actions, and green success states.
+- TOTP is now shown only as a second authentication step when enabled for the account.
+- Added a visual app catalog with app cards, names, versions, icon areas and explicit install actions.
+- App-specific installation forms open only after selecting an app from the catalog.
