@@ -60,3 +60,13 @@
 - Restored persistent legacy-installation detection and protected removal.
 - Expanded CSV Reporting AppConfig schema for columns, renames, links, filters and rules.
 - Kept AppConfig, application files and application data physically separate.
+
+## 2.0.0 - 2026-10-18
+
+- Enforced exactly one global administrator: the initial setup account.
+- Separated user creation, tenant read access, group membership and app permissions.
+- Added per-instance `use` and `edit` grants for users and groups.
+- Rebuilt CSV Reporting AppConfig and live renderer with columns, renames and links.
+- Added management-system update queue and privileged systemd update worker.
+- Hardened certificate generation and verification before Apache activation.
+- Added additive database migration for access grants and update jobs.

@@ -10,7 +10,7 @@ cleanup(){ [ -n "$PHP_PID" ]&&kill "$PHP_PID" 2>/dev/null||true;rm -rf "$BOOT";}
 port_free(){ ! ss -ltnH|awk '{print $4}'|grep -Eq "(:|])$1$"; }
 while ! port_free "$PORT";do PORT=$((PORT+1));done
 BEFORE_APACHE=false;BEFORE_PHP=false;command -v apache2 >/dev/null&&BEFORE_APACHE=true;command -v php >/dev/null&&BEFORE_PHP=true
-MISSING=();command -v git >/dev/null||MISSING+=(git);command -v php >/dev/null||MISSING+=(php-cli);command -v apache2 >/dev/null||MISSING+=(apache2 libapache2-mod-php);php -m 2>/dev/null|grep -qi '^pdo_sqlite$'||MISSING+=(php-sqlite3);php -m 2>/dev/null|grep -qi '^openssl$'||MISSING+=(php-common);command -v openssl >/dev/null||MISSING+=(openssl)
+MISSING=();command -v git >/dev/null||MISSING+=(git);command -v php >/dev/null||MISSING+=(php-cli);command -v apache2 >/dev/null||MISSING+=(apache2 libapache2-mod-php);php -m 2>/dev/null|grep -qi '^pdo_sqlite$'||MISSING+=(php-sqlite3);php -m 2>/dev/null|grep -qi '^openssl$'||MISSING+=(php-common);command -v openssl >/dev/null||MISSING+=(openssl);command -v rsync >/dev/null||MISSING+=(rsync)
 INSTALLED=();if [ "${#MISSING[@]}" -gt 0 ];then apt-get update;apt-get install -y --no-install-recommends "${MISSING[@]}";INSTALLED=("${MISSING[@]}");fi
 GIT_TERMINAL_PROMPT=0 git clone --depth 1 "$REPOSITORY" "$BOOT/repo"
 mkdir -p "$BOOT/repo/runtime"
@@ -30,10 +30,46 @@ chown -R root:www-data "$TARGET";find "$TARGET" -type d -exec chmod 0750 {} +;fi
 for d in state runtime backups exports;do chown -R www-data:www-data "$TARGET/$d";find "$TARGET/$d" -type d -exec chmod 0770 {} +;find "$TARGET/$d" -type f -exec chmod 0660 {} +;done
 php -r 'require $argv[1]."/src/Core.php";$c=new Wams\Core();$c->migrate();$q=$c->db->prepare("INSERT INTO users(id,username,email,password_hash,is_global,active,created_at) VALUES(?,?,?,?,1,1,?)");$q->execute([$c->id(),$argv[2],$argv[3],$argv[4],gmdate("c")]);' "$TARGET" "$USERNAME" "$EMAIL" "$HASH"
 chown www-data:www-data "$TARGET/state/database.sqlite"*;chmod 0660 "$TARGET/state/database.sqlite"*
-HOST="$(hostname -f 2>/dev/null||hostname)";openssl req -x509 -newkey rsa:2048 -nodes -sha256 -days 365 -subj "/CN=$HOST" -addext "subjectAltName=DNS:$HOST,IP:$IP" -keyout "$TARGET/state/tls/server.key" -out "$TARGET/state/tls/server.crt" >/dev/null 2>&1;chown www-data:www-data "$TARGET/state/tls/"*;chmod 0640 "$TARGET/state/tls/server.key"
+HOST="$(hostname -f 2>/dev/null||hostname)"
+CERTCFG="$BOOT/openssl.cnf";cat > "$CERTCFG" <<CERT
+[req]
+distinguished_name=dn
+x509_extensions=v3
+prompt=no
+[dn]
+CN=$HOST
+[v3]
+subjectAltName=DNS:$HOST,IP:$IP
+keyUsage=digitalSignature,keyEncipherment
+extendedKeyUsage=serverAuth
+CERT
+openssl req -x509 -newkey rsa:2048 -nodes -sha256 -days 365 -config "$CERTCFG" -keyout "$TARGET/state/tls/server.key" -out "$TARGET/state/tls/server.crt"
+[ -s "$TARGET/state/tls/server.crt" ]&&[ -s "$TARGET/state/tls/server.key" ]||{ echo "Zertifikat konnte nicht erzeugt werden." >&2;exit 1; }
+openssl x509 -in "$TARGET/state/tls/server.crt" -noout -checkend 60 >/dev/null
+chown root:www-data "$TARGET/state/tls/server.crt" "$TARGET/state/tls/server.key";chmod 0644 "$TARGET/state/tls/server.crt";chmod 0640 "$TARGET/state/tls/server.key"
 SLUG="wams-${UUID%%-*}";CONF="/etc/apache2/sites-available/$SLUG.conf";printf 'Listen %s\n' "$PORT" > "/etc/apache2/conf-available/$SLUG-port.conf"
 sed -e "s|__PORT__|$PORT|g" -e "s|__ROOT__|$TARGET|g" -e "s|__SLUG__|$SLUG|g" "$TARGET/resources/apache/site.conf.template" > "$CONF";sed -i "/ServerName/a SSLEngine on\nSSLCertificateFile $TARGET/state/tls/server.crt\nSSLCertificateKeyFile $TARGET/state/tls/server.key" "$CONF"
-a2enmod ssl rewrite >/dev/null;a2enconf "$SLUG-port" >/dev/null;a2ensite "$SLUG" >/dev/null;apache2ctl configtest;systemctl reload apache2
+a2enmod ssl rewrite >/dev/null;a2enconf "$SLUG-port" >/dev/null;a2ensite "$SLUG" >/dev/null
+cat > "/etc/systemd/system/$SLUG-update.service" <<UNIT
+[Unit]
+Description=WAMS update worker $UUID
+After=network-online.target
+[Service]
+Type=oneshot
+ExecStart=$TARGET/update-worker.sh
+UNIT
+cat > "/etc/systemd/system/$SLUG-update.timer" <<UNIT
+[Unit]
+Description=WAMS update queue timer $UUID
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=1min
+Unit=$SLUG-update.service
+[Install]
+WantedBy=timers.target
+UNIT
+systemctl daemon-reload;systemctl enable --now "$SLUG-update.timer"
+apache2ctl configtest;systemctl reload apache2
 LEDGER="$TARGET/state/installation-ledger.tsv";printf 'timestamp\taction\ttarget\townership\n' > "$LEDGER";for p in "${INSTALLED[@]}";do printf '%s\tpackage.install\t%s\tcreated-by-wams\n' "$(date -u +%FT%TZ)" "$p" >> "$LEDGER";done;printf '%s\tpath.create\t%s\tcreated-by-wams\n' "$(date -u +%FT%TZ)" "$TARGET" >> "$LEDGER";chown www-data:www-data "$LEDGER";chmod 0660 "$LEDGER"
 for _ in 1 2 3 4 5;do curl -kfsS --max-time 5 "https://127.0.0.1:$PORT/login" >/dev/null&&break;sleep 1;done
 curl -kfsS --max-time 5 "https://127.0.0.1:$PORT/login" >/dev/null||{ echo "Start fehlgeschlagen: /var/log/apache2/$SLUG-error.log" >&2;exit 1; }

@@ -4,7 +4,7 @@
 Projektname:    Web Application Management System
 Repository:     web-application-management-system
 Kurzname:       WAMS
-Version:        1.5.0
+Version:        2.0.0
 Zielsysteme:    Debian und Ubuntu Server
 Web-Stack:      Apache HTTP Server, PHP und SQLite
 Bedienmodell:   Ein Terminalbefehl, danach ausschließlich Weboberfläche
@@ -453,7 +453,7 @@ Systemprüfung
 
 ## 20. Projektstatus
 
-Version `1.5.0` enthält den temporären installationsunabhängigen Browser-Bootstrap, die bedingte Pfadauswahl, einen dauerhaften eigenen WAMS-Port sowie die optionale Verwendung der freien Ports 80 oder 443. Die bisherige Zielarchitektur, App-Trennung, Example Application und CSV-Reporting-Integration bleiben unverändert erhalten.
+Version `2.0.0` enthält den temporären installationsunabhängigen Browser-Bootstrap, die bedingte Pfadauswahl, einen dauerhaften eigenen WAMS-Port sowie die optionale Verwendung der freien Ports 80 oder 443. Die bisherige Zielarchitektur, App-Trennung, Example Application und CSV-Reporting-Integration bleiben unverändert erhalten.
 
 ## 21. Oberfläche ab Version 1.3.0
 
@@ -487,3 +487,14 @@ Launcher und Administration sind die beiden sichtbaren Produktbereiche. Die frü
 CSV Reporting speichert je App-Instanz eine eigenständige `state/instances/<instance-id>/config.json`. Diese AppConfig ist unabhängig von App-Dateien und AppData und enthält Remote-URL, Überschriften, Darstellung, Spaltenauswahl, Umbenennungen, Links, Filter und Regeln. Remote-CSV-Antworten werden weiterhin nur im Speicher verarbeitet.
 
 Die Adminoberfläche enthält wieder Tenant-Erstellung, Benutzeranlage, globale Administratoren, Tenant-Zuweisungen, Gruppenanlage, App-Katalog, App-Installation, App-Verwaltung und die dauerhaft sichtbare Erkennung weiterer oder älterer Installationen. Eine erkannte Altinstallation wird nur nach erneuter Passworteingabe und sicherer Pfadprüfung entfernt.
+
+
+## 25. Berechtigungs- und Update-Modell ab Version 2.0.0
+
+Es existiert genau ein globaler Administrator: das bei der Ersteinrichtung angelegte Konto. Weitere Konten sind normale Benutzer. Benutzeranlage, Tenant-Leserechte, Gruppenmitgliedschaften und App-Rechte sind getrennte Vorgänge.
+
+Tenant-Leserechte können direkt an Benutzer oder über Gruppen vergeben werden. App-Instanzen besitzen unabhängig davon die Rechte `use` und `edit`. `use` erlaubt das Öffnen der Instanz; `edit` erlaubt den App-Editor beziehungsweise die App-Konfiguration. Beide Rechte können direkt an einen Benutzer oder an eine Gruppe vergeben werden. Der globale Administrator besitzt alle Rechte automatisch.
+
+Das Management-System besitzt denselben Update-Lebenszyklus wie App-Dateien: Updatequelle, installierter Stand, verfügbarer Stand und Updateauftrag. Ein root-eigener systemd-Timer verarbeitet die von der Weboberfläche eingereihten Aufträge, während `state`, AppConfig, AppData, Backups und Exporte erhalten bleiben.
+
+Die Zertifikatserstellung wird vor Aktivierung der Apache-Site auf Existenz, Dateigröße und Gültigkeit geprüft. Apache wird nicht konfiguriert, wenn Zertifikat oder Schlüssel fehlen.
