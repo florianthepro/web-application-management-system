@@ -1,0 +1,1 @@
+{"appId":"csv-reporting","published":true,"versions":[{"version":"1.0.0","channel":"stable","entryPoint":"public/index.php","remoteDataMode":"live","notes":"WAMS-native integration without remote loader or downloaded CSV file."}]}

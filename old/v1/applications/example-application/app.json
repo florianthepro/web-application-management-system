@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "appId": "example-application",
+  "name": "Example Application",
+  "version": "0.0.0-template",
+  "description": "Nicht installierbare, leere Referenzstruktur für App-Entwickler.",
+  "catalog": {
+    "discoverable": false,
+    "installable": false,
+    "downloadable": false,
+    "reason": "development-template"
+  },
+  "entryPoint": "public/index.php",
+  "multiInstance": true,
+  "tenantMode": "required",
+  "configurationSchema": "app-config.schema.json",
+  "versionsIndex": "versions/index.json",
+  "stylesIndex": "styles/index.json",
+  "integration": {
+    "sharedSession": true,
+    "identityContext": ["user", "groups", "tenant"],
+    "managementOverlay": true
+  }
+}
