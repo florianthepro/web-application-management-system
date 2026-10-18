@@ -10,10 +10,12 @@ cleanup(){ [ -n "$PHP_PID" ]&&kill "$PHP_PID" 2>/dev/null||true;rm -rf "$BOOT";}
 port_free(){ ! ss -ltnH|awk '{print $4}'|grep -Eq "(:|])$1$"; }
 while ! port_free "$PORT";do PORT=$((PORT+1));done
 BEFORE_APACHE=false;BEFORE_PHP=false;command -v apache2 >/dev/null&&BEFORE_APACHE=true;command -v php >/dev/null&&BEFORE_PHP=true
-MISSING=();command -v git >/dev/null||MISSING+=(git);command -v php >/dev/null||MISSING+=(php-cli);command -v apache2 >/dev/null||MISSING+=(apache2 libapache2-mod-php);php -m 2>/dev/null|grep -qi '^pdo_sqlite$'||MISSING+=(php-sqlite3);php -m 2>/dev/null|grep -qi '^openssl$'||MISSING+=(php-common);command -v openssl >/dev/null||MISSING+=(openssl);command -v rsync >/dev/null||MISSING+=(rsync)
+MISSING=();command -v git >/dev/null||MISSING+=(git);command -v php >/dev/null||MISSING+=(php-cli);command -v apache2 >/dev/null||MISSING+=(apache2 libapache2-mod-php);php -m 2>/dev/null|grep -qi '^pdo_sqlite$'||MISSING+=(php-sqlite3);php -m 2>/dev/null|grep -qi '^openssl$'||MISSING+=(php-common);php -m 2>/dev/null|grep -qi '^zip$'||MISSING+=(php-zip);command -v openssl >/dev/null||MISSING+=(openssl);command -v rsync >/dev/null||MISSING+=(rsync)
 INSTALLED=();if [ "${#MISSING[@]}" -gt 0 ];then apt-get update;apt-get install -y --no-install-recommends "${MISSING[@]}";INSTALLED=("${MISSING[@]}");fi
 GIT_TERMINAL_PROMPT=0 git clone --depth 1 "$REPOSITORY" "$BOOT/repo"
 mkdir -p "$BOOT/repo/runtime"
+while IFS= read -r -d '' file;do php -l "$file" >/dev/null||{ echo "PHP-Syntaxprüfung fehlgeschlagen: $file" >&2;exit 1;};done < <(find "$BOOT/repo" -type f -name '*.php' -print0)
+php "$BOOT/repo/tests/repository-contract.php"
 UUID="$(cat /proc/sys/kernel/random/uuid)";TARGET="/opt/wams-$UUID";while [ -e "$TARGET" ];do UUID="$(cat /proc/sys/kernel/random/uuid)";TARGET="/opt/wams-$UUID";done
 LEGACY_JSON="$(find /opt /var/www -maxdepth 4 -type f -name database.sqlite -path '*/state/*' -printf '%h\n' 2>/dev/null|sed 's#/state$##'|php -r '$a=[];while(($l=fgets(STDIN))!==false){$l=trim($l);if($l!=="")$a[]=["path"=>$l,"status"=>"legacy"]; }echo json_encode($a,JSON_UNESCAPED_SLASHES);')"
 export PROBE="$BOOT/repo/runtime/system-probe.json" TOKEN PORT

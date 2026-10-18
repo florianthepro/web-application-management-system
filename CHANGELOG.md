@@ -70,3 +70,12 @@
 - Added management-system update queue and privileged systemd update worker.
 - Hardened certificate generation and verification before Apache activation.
 - Added additive database migration for access grants and update jobs.
+
+
+## 2.1.0 - 2026-10-18
+
+- Added target-side PHP linting before setup is exposed.
+- Added executable repository contract validation.
+- Added group-based tenant read assignment interface.
+- Fixed update worker row processing.
+- Added PHP ZIP dependency detection for exports and archives.

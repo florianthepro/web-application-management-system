@@ -4,7 +4,7 @@
 Projektname:    Web Application Management System
 Repository:     web-application-management-system
 Kurzname:       WAMS
-Version:        2.0.0
+Version:        2.1.0
 Zielsysteme:    Debian und Ubuntu Server
 Web-Stack:      Apache HTTP Server, PHP und SQLite
 Bedienmodell:   Ein Terminalbefehl, danach ausschließlich Weboberfläche
@@ -453,7 +453,7 @@ Systemprüfung
 
 ## 20. Projektstatus
 
-Version `2.0.0` enthält den temporären installationsunabhängigen Browser-Bootstrap, die bedingte Pfadauswahl, einen dauerhaften eigenen WAMS-Port sowie die optionale Verwendung der freien Ports 80 oder 443. Die bisherige Zielarchitektur, App-Trennung, Example Application und CSV-Reporting-Integration bleiben unverändert erhalten.
+Version `2.1.0` enthält den temporären installationsunabhängigen Browser-Bootstrap, die bedingte Pfadauswahl, einen dauerhaften eigenen WAMS-Port sowie die optionale Verwendung der freien Ports 80 oder 443. Die bisherige Zielarchitektur, App-Trennung, Example Application und CSV-Reporting-Integration bleiben unverändert erhalten.
 
 ## 21. Oberfläche ab Version 1.3.0
 
@@ -498,3 +498,10 @@ Tenant-Leserechte können direkt an Benutzer oder über Gruppen vergeben werden.
 Das Management-System besitzt denselben Update-Lebenszyklus wie App-Dateien: Updatequelle, installierter Stand, verfügbarer Stand und Updateauftrag. Ein root-eigener systemd-Timer verarbeitet die von der Weboberfläche eingereihten Aufträge, während `state`, AppConfig, AppData, Backups und Exporte erhalten bleiben.
 
 Die Zertifikatserstellung wird vor Aktivierung der Apache-Site auf Existenz, Dateigröße und Gültigkeit geprüft. Apache wird nicht konfiguriert, wenn Zertifikat oder Schlüssel fehlen.
+
+
+## 26. Installationssicherheit ab Version 2.1.0
+
+Der Installer installiert die tatsächlich benötigten PHP-Erweiterungen einschließlich `pdo_sqlite`, OpenSSL und ZIP-Unterstützung. Vor dem Start des Browser-Setups werden alle PHP-Dateien mit `php -l` geprüft und der Repository-Vertrag ausgeführt. Bei einem Syntax- oder Strukturfehler wird keine Installation angeboten.
+
+Die Zugriffsverwaltung trennt Benutzerkonten, direkte Tenant-Leserechte, gruppenbasierte Tenant-Leserechte, Gruppenmitgliedschaften und die App-Instanzrechte `use` und `edit`.

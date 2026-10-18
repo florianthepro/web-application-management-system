@@ -19,4 +19,4 @@ while IFS=$'\t' read -r ID TYPE TARGET ACTION;do
   fi
   rm -rf "$TMP"
   "$PHP_BIN" -r '$db=new PDO("sqlite:".$argv[1]);$q=$db->prepare("UPDATE update_jobs SET status=?,finished_at=?,message=? WHERE id=?");$q->execute([$argv[2],gmdate("c"),$argv[3],$argv[4]]);' "$DB" "$STATUS" "$MESSAGE" "$ID"
-done < <("$PHP_BIN" -r '$db=new PDO("sqlite:".$argv[1]);foreach($db->query("SELECT id,target_type,target_id,action FROM update_jobs WHERE status=\"queued\" ORDER BY requested_at") as $r)echo implode("\t",$r)."\n";' "$DB")
+done < <("$PHP_BIN" -r '$db=new PDO("sqlite:".$argv[1]);$db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE,PDO::FETCH_NUM);foreach($db->query("SELECT id,target_type,target_id,action FROM update_jobs WHERE status=\"queued\" ORDER BY requested_at") as $r)echo implode("\t",$r)."\n";' "$DB")
