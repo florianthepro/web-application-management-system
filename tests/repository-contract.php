@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 $root=dirname(__DIR__);$errors=[];
-$required=['install.sh','uninstall.sh','update-worker.sh','public/index.php','src/Core.php','migrations/001.sql','migrations/002.sql','applications/csv-reporting/app.json','applications/csv-reporting/app-config.schema.json','applications/csv-reporting/public/index.php','applications/example-application/app.json'];
+$required=['install.sh','uninstall.sh','update-worker.sh','public/index.php','src/Core.php','migrations/001.sql','migrations/002.sql','migrations/003.sql','applications/csv-reporting/app.json','applications/csv-reporting/app-config.schema.json','applications/csv-reporting/public/index.php','applications/example-application/app.json'];
 foreach($required as$file)if(!is_file($root.'/'.$file))$errors[]='Fehlt: '.$file;
 $example=json_decode((string)file_get_contents($root.'/applications/example-application/app.json'),true);
 foreach(['discoverable','installable','downloadable']as$key)if(($example['catalog'][$key]??null)!==false)$errors[]='Example Application muss '.$key.'=false verwenden.';

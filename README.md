@@ -4,7 +4,7 @@
 Projektname:    Web Application Management System
 Repository:     web-application-management-system
 Kurzname:       WAMS
-Version:        2.1.2
+Version:        2.2.0
 Zielsysteme:    Debian und Ubuntu Server
 Web-Stack:      Apache HTTP Server, PHP und SQLite
 Bedienmodell:   Ein Terminalbefehl, danach ausschließlich Weboberfläche
@@ -453,7 +453,7 @@ Systemprüfung
 
 ## 20. Projektstatus
 
-Version `2.1.2` enthält den temporären installationsunabhängigen Browser-Bootstrap, die bedingte Pfadauswahl, einen dauerhaften eigenen WAMS-Port sowie die optionale Verwendung der freien Ports 80 oder 443. Die bisherige Zielarchitektur, App-Trennung, Example Application und CSV-Reporting-Integration bleiben unverändert erhalten.
+Version `2.2.0` enthält den temporären installationsunabhängigen Browser-Bootstrap, die bedingte Pfadauswahl, einen dauerhaften eigenen WAMS-Port sowie die optionale Verwendung der freien Ports 80 oder 443. Die bisherige Zielarchitektur, App-Trennung, Example Application und CSV-Reporting-Integration bleiben unverändert erhalten.
 
 ## 21. Oberfläche ab Version 1.3.0
 
@@ -515,3 +515,12 @@ Der temporäre Setupserver verwendet einen freien Port ab `8099`. Die endgültig
 ## 28. Bereinigung fehlgeschlagener Apache-Konfigurationen ab Version 2.1.2
 
 Vor einer neuen Installation prüft der Installer vorhandene aktivierte `wams-*.conf`- und `wams-*-port.conf`-Dateien. Verwaiste WAMS-Portkonfigurationen, fehlende DocumentRoots, fehlende Zertifikate und doppelte WAMS-`Listen`-Deklarationen werden deaktiviert und nach `/var/lib/wams-installer/quarantine` kopiert. Anschließend muss `apache2ctl configtest` erfolgreich sein, bevor das Setup startet. Bei einem Fehler der neuen Installation werden deren Apache-Dateien automatisch zurückgerollt.
+
+
+## 29. Aufgeräumte Navigation, Tenant-Icons und CSV Reporting ab Version 2.2.0
+
+Tenant-Icons können beim Anlegen sowie nachträglich in der Tenant-Liste als PNG, JPEG oder WebP bis 1 MiB hinterlegt werden. Sie werden geschützt aus `state/icons` ausgeliefert und im Launcher beim aktiven Tenant angezeigt. Die Tenant-Auswahl im Launcher erscheint nur bei mindestens zwei lesbaren Tenants.
+
+Die Administration verwendet die drei Navigationsgruppen Plattform, Zugriff und System. Launcher und Abmeldung sind konsistent als Kontoaktionen erreichbar. Nicht erforderliche beschreibende Unterzeilen wurden entfernt.
+
+CSV Reporting wurde neu implementiert: Live-Abruf mit HTTP-Statusprüfung, CSV-Parsing im Arbeitsspeicher, globale Suche, Spaltenfilter, Sortierung, Paging, konfigurierbare Seitengröße, sichtbare Spalten, Spaltenumbenennungen und Spaltenlinks. Die Remote-Antwort wird nicht gespeichert.

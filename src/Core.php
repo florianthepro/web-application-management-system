@@ -13,7 +13,7 @@ final class Core{
   $this->db->exec('PRAGMA foreign_keys=ON;PRAGMA journal_mode=WAL;PRAGMA busy_timeout=5000');$this->migrate();
  }
  public function migrate():void{
-  foreach(glob(dirname(__DIR__).'/migrations/*.sql')?:[] as $file){$sql=file_get_contents($file);if($sql===false)throw new RuntimeException('Migration fehlt.');$this->db->exec($sql);}
+  foreach(glob(dirname(__DIR__).'/migrations/*.sql')?:[] as $file){$sql=file_get_contents($file);if($sql===false)throw new RuntimeException('Migration fehlt.');try{$this->db->exec($sql);}catch(\PDOException $e){if(!str_contains($e->getMessage(),'duplicate column name'))throw $e;}}
   $cols=array_column($this->db->query('PRAGMA table_info(users)')->fetchAll(),'name');
   if(!in_array('totp_secret',$cols,true))$this->db->exec('ALTER TABLE users ADD COLUMN totp_secret TEXT');
   if(!in_array('totp_enabled',$cols,true))$this->db->exec('ALTER TABLE users ADD COLUMN totp_enabled INTEGER NOT NULL DEFAULT 0');

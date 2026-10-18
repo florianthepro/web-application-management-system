@@ -95,3 +95,12 @@
 - Detects and quarantines duplicate WAMS Listen declarations before setup.
 - Requires a clean Apache preflight before starting installation.
 - Rolls back newly created Apache files when installation fails.
+
+
+## 2.2.0 - 2026-10-18
+
+- Added tenant icon upload during creation and for existing tenants.
+- Hid tenant switching when fewer than two readable tenants exist.
+- Removed nonessential administrative subtitles.
+- Grouped navigation into Platform, Access and System.
+- Rebuilt CSV Reporting renderer, controls, styling and client-side interaction.
