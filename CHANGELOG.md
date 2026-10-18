@@ -79,3 +79,11 @@
 - Added group-based tenant read assignment interface.
 - Fixed update worker row processing.
 - Added PHP ZIP dependency detection for exports and archives.
+
+
+## 2.1.1 - 2026-10-18
+
+- Separated temporary setup port and permanent HTTPS application port.
+- Setup starts at 8099; the final login starts at a free port beginning with 8443.
+- Port selection now checks both active sockets and Apache Listen declarations.
+- Prevented duplicate Apache listeners and final-login reuse of the setup port.
