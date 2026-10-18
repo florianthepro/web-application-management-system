@@ -4,7 +4,7 @@
 Projektname:    Web Application Management System
 Repository:     web-application-management-system
 Kurzname:       WAMS
-Version:        1.4.0
+Version:        1.5.0
 Zielsysteme:    Debian und Ubuntu Server
 Web-Stack:      Apache HTTP Server, PHP und SQLite
 Bedienmodell:   Ein Terminalbefehl, danach ausschließlich Weboberfläche
@@ -453,7 +453,7 @@ Systemprüfung
 
 ## 20. Projektstatus
 
-Version `1.4.0` enthält den temporären installationsunabhängigen Browser-Bootstrap, die bedingte Pfadauswahl, einen dauerhaften eigenen WAMS-Port sowie die optionale Verwendung der freien Ports 80 oder 443. Die bisherige Zielarchitektur, App-Trennung, Example Application und CSV-Reporting-Integration bleiben unverändert erhalten.
+Version `1.5.0` enthält den temporären installationsunabhängigen Browser-Bootstrap, die bedingte Pfadauswahl, einen dauerhaften eigenen WAMS-Port sowie die optionale Verwendung der freien Ports 80 oder 443. Die bisherige Zielarchitektur, App-Trennung, Example Application und CSV-Reporting-Integration bleiben unverändert erhalten.
 
 ## 21. Oberfläche ab Version 1.3.0
 
@@ -478,3 +478,12 @@ WAMS trennt die Oberfläche sichtbar in drei Bereiche: **Launcher** für die tä
 Die Gestaltung verwendet Schwarz, Grau und Weiß als Basis, normales Blau für primäre Aktionen, Gelb für Warnungen, Rot für Fehler und kritische Aktionen sowie Grün für Erfolgsmeldungen. Panels, Formulare und Navigation sind flach, eindeutig abgegrenzt und ohne dekorative Verläufe oder unscharfe Ebenen aufgebaut.
 
 TOTP wird bei der Anmeldung nur als zweiter Schritt angezeigt, wenn es für das erkannte Benutzerkonto aktiviert ist. Der App-Katalog zeigt installierbare Apps als Karten mit Name, Versionsangabe, Iconfläche und Installationsaktion. Erst nach Auswahl einer App erscheint deren visuelles Installationsformular.
+
+
+## 24. Konsolidierte Anforderungen ab Version 1.5.0
+
+Launcher und Administration sind die beiden sichtbaren Produktbereiche. Die frühere Trennung zwischen Management und Admin wurde aufgehoben; Tenants, App-Katalog, App-Instanzen, Benutzer, Gruppen, Sicherheit und System liegen in einer gemeinsamen Adminoberfläche. Einrichtung und Anmeldung bilden ausschließlich den vorgeschalteten Authentifizierungsablauf und verwenden die kompakte NADA-Gestaltung mit `#080c11`, `#111923`, `#293747`, `#e7edf4`, `#8c9bad` und `#56a5ff`.
+
+CSV Reporting speichert je App-Instanz eine eigenständige `state/instances/<instance-id>/config.json`. Diese AppConfig ist unabhängig von App-Dateien und AppData und enthält Remote-URL, Überschriften, Darstellung, Spaltenauswahl, Umbenennungen, Links, Filter und Regeln. Remote-CSV-Antworten werden weiterhin nur im Speicher verarbeitet.
+
+Die Adminoberfläche enthält wieder Tenant-Erstellung, Benutzeranlage, globale Administratoren, Tenant-Zuweisungen, Gruppenanlage, App-Katalog, App-Installation, App-Verwaltung und die dauerhaft sichtbare Erkennung weiterer oder älterer Installationen. Eine erkannte Altinstallation wird nur nach erneuter Passworteingabe und sicherer Pfadprüfung entfernt.

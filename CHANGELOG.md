@@ -51,3 +51,12 @@
 - TOTP is now shown only as a second authentication step when enabled for the account.
 - Added a visual app catalog with app cards, names, versions, icon areas and explicit install actions.
 - App-specific installation forms open only after selecting an app from the catalog.
+
+## 1.5.0 - 2026-10-18
+
+- Consolidated Management and Admin into one complete administration area.
+- Matched setup and login styling to the compact NADA visual system.
+- Restored user creation, tenant assignment and group creation interfaces.
+- Restored persistent legacy-installation detection and protected removal.
+- Expanded CSV Reporting AppConfig schema for columns, renames, links, filters and rules.
+- Kept AppConfig, application files and application data physically separate.
