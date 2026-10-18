@@ -1,1 +1,1 @@
-{"schemaVersion":1,"appId":"csv-reporting","name":"CSV Reporting","version":"1.0.0","catalog":{"discoverable":true,"installable":true,"downloadable":true},"permissions":["csv-reporting.view","csv-reporting.manage"],"remoteData":{"mode":"live","persistResponse":false}}
+{"schemaVersion":1,"appId":"csv-reporting","name":"CSV Reporting","version":"3.0.0","icon":"CR","catalog":{"discoverable":true,"installable":true,"downloadable":true},"permissions":["use","edit"],"remoteData":{"mode":"live","persistResponse":false}}

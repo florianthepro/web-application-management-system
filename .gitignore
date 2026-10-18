@@ -1,9 +1,8 @@
-/runtime/*
-!/runtime/.gitkeep
 /state/*
 !/state/.gitkeep
+/runtime/*
+!/runtime/.gitkeep
 /backups/*
 !/backups/.gitkeep
 /exports/*
 !/exports/.gitkeep
-*.log

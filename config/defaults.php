@@ -1,2 +1,4 @@
 <?php
-return ['db'=>dirname(__DIR__).'/state/database.sqlite','state'=>dirname(__DIR__).'/state','apps'=>dirname(__DIR__).'/applications'];
+declare(strict_types=1);
+$root=dirname(__DIR__);
+return ['root'=>$root,'state'=>$root.'/state','db'=>$root.'/state/database.sqlite','apps'=>$root.'/applications'];
