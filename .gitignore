@@ -6,6 +6,3 @@
 !/backups/.gitkeep
 /exports/*
 !/exports/.gitkeep
-/applications/csv-reporting/upstream/*.php
-/applications/csv-reporting/upstream/LICENSE
-/applications/csv-reporting/upstream/UPSTREAM_COMMIT
