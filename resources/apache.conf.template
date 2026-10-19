@@ -1,22 +1,15 @@
+Listen __PORT__
 <VirtualHost *:__PORT__>
- ServerName localhost
  DocumentRoot __ROOT__/public
  SSLEngine on
  SSLCertificateFile __ROOT__/state/tls/server.crt
  SSLCertificateKeyFile __ROOT__/state/tls/server.key
  <Directory __ROOT__/public>
   Options -Indexes
-  AllowOverride None
   Require all granted
   DirectoryIndex index.php
   RewriteEngine On
   RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteCond %{REQUEST_FILENAME} !-d
   RewriteRule ^ index.php [QSA,L]
  </Directory>
- <Directory __ROOT__/state>
-  Require all denied
- </Directory>
- ErrorLog ${APACHE_LOG_DIR}/__SLUG__-error.log
- CustomLog ${APACHE_LOG_DIR}/__SLUG__-access.log combined
 </VirtualHost>

@@ -1,12 +1,4 @@
-CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY,value TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY,username TEXT UNIQUE NOT NULL,password_hash TEXT NOT NULL,active INTEGER NOT NULL DEFAULT 1,is_global INTEGER NOT NULL DEFAULT 0,totp_secret TEXT,totp_enabled INTEGER NOT NULL DEFAULT 0,created_at TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS tenants(id TEXT PRIMARY KEY,name TEXT NOT NULL,icon_file TEXT,created_at TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS groups(id TEXT PRIMARY KEY,name TEXT NOT NULL,created_at TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS group_users(group_id TEXT NOT NULL,user_id TEXT NOT NULL,PRIMARY KEY(group_id,user_id),FOREIGN KEY(group_id) REFERENCES groups(id) ON DELETE CASCADE,FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE);
-CREATE TABLE IF NOT EXISTS tenant_grants(id TEXT PRIMARY KEY,tenant_id TEXT NOT NULL,principal_type TEXT NOT NULL CHECK(principal_type IN('user','group')),principal_id TEXT NOT NULL,created_at TEXT NOT NULL,UNIQUE(tenant_id,principal_type,principal_id),FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE CASCADE);
-CREATE TABLE IF NOT EXISTS app_instances(id TEXT PRIMARY KEY,app_id TEXT NOT NULL,tenant_id TEXT,name TEXT NOT NULL,version TEXT NOT NULL,created_at TEXT NOT NULL,FOREIGN KEY(tenant_id) REFERENCES tenants(id) ON DELETE SET NULL);
-CREATE TABLE IF NOT EXISTS app_grants(id TEXT PRIMARY KEY,instance_id TEXT NOT NULL,principal_type TEXT NOT NULL CHECK(principal_type IN('user','group')),principal_id TEXT NOT NULL,permission TEXT NOT NULL CHECK(permission IN('use','edit')),created_at TEXT NOT NULL,UNIQUE(instance_id,principal_type,principal_id,permission),FOREIGN KEY(instance_id) REFERENCES app_instances(id) ON DELETE CASCADE);
-CREATE TABLE IF NOT EXISTS update_jobs(id TEXT PRIMARY KEY,target_type TEXT NOT NULL,target_id TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'queued',created_at TEXT NOT NULL,finished_at TEXT,message TEXT NOT NULL DEFAULT '');
-CREATE TABLE IF NOT EXISTS audit_log(id TEXT PRIMARY KEY,user_id TEXT,action TEXT NOT NULL,object_type TEXT NOT NULL,object_id TEXT,created_at TEXT NOT NULL,details TEXT NOT NULL DEFAULT '{}');
 CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY,value TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS repository_sync_jobs(id TEXT PRIMARY KEY,status TEXT NOT NULL DEFAULT 'queued',created_at TEXT NOT NULL,finished_at TEXT,message TEXT NOT NULL DEFAULT '');
+CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY,username TEXT UNIQUE NOT NULL,password_hash TEXT NOT NULL,is_global_admin INTEGER NOT NULL DEFAULT 0,active INTEGER NOT NULL DEFAULT 1,created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS installed_apps(id TEXT PRIMARY KEY,app_id TEXT NOT NULL,name TEXT NOT NULL,directory TEXT NOT NULL,installed_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS user_apps(user_id TEXT NOT NULL,installed_app_id TEXT NOT NULL,is_admin INTEGER NOT NULL DEFAULT 0,PRIMARY KEY(user_id,installed_app_id),FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,FOREIGN KEY(installed_app_id) REFERENCES installed_apps(id) ON DELETE CASCADE);

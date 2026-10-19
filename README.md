@@ -1,12 +1,13 @@
 # Web Application Management System
 
 ```text
-Projekt:       Web Application Management System
-Kurzname:      WAMS
-Version:       5.0.0
-Zielsysteme:   Debian und Ubuntu Server
-Web-Stack:     Apache, PHP und SQLite
+Projekt:        Web Application Management System
+Kurzname:       WAMS
+Version:        1.0.0
+App-Repository: WebApp Foundry
 ```
+
+WAMS ist eine einfache Zugangsverwaltung und ein Launcher für Web-Apps aus einem strukturierten Git-Repository. Der App-Code wird unverändert kopiert und eingebunden.
 
 ## Installation
 
@@ -16,273 +17,175 @@ curl -fsSL https://raw.githubusercontent.com/florianthepro/web-application-manag
   --repository https://github.com/florianthepro/web-application-management-system
 ```
 
-WAMS ist eine zentrale Plattform für mehrfach installierbare PHP-Webanwendungen.
+Der Installer gibt anschließend eine HTTPS-URL für das Setup aus.
 
-## Oberfläche
+## Setup
 
-WAMS besitzt zwei sichtbare Bereiche:
-
-```text
-Launcher
-Administration
-```
-
-Die Administration enthält:
-
-```text
-Übersicht
-Apps
-App installieren
-Benutzer & Gruppen
-System
-Launcher
-Abmelden
-```
-
-Die Oberfläche verwendet Schwarz, Grau, Weiß und normales Blau. Sie verwendet keine Verläufe, Glasflächen oder unnötigen Erklärungstexte.
-
-## Setup und Anmeldung
-
-Das Web-Setup fragt ausschließlich:
+Das Setup fragt nur:
 
 ```text
 Benutzername
 Passwort
+App-Repository
 ```
 
-Der erste Benutzer ist der einzige globale Administrator. TOTP wird bei aktivierten Konten erst nach erfolgreicher Prüfung von Benutzername und Passwort angezeigt.
-
-## Ports
+Standard-App-Repository:
 
 ```text
-Temporäres HTTP-Setup: ab 8099
-Dauerhafte HTTPS-App:  ab 8443
+https://github.com/florianthepro/webapp-foundry
 ```
 
-Der Installer prüft laufende Listener und vorhandene Apache-`Listen`-Direktiven. Setup und fertige Anwendung verwenden getrennte Ports.
+Der erste Benutzer wird globaler Administrator.
 
-## Installation
+## App-Repository
 
-Der Installer:
-
-1. installiert nur fehlende Pakete;
-2. prüft die bestehende Apache-Konfiguration;
-3. klont das angegebene Repository;
-4. führt `php -l` für alle PHP-Dateien aus;
-5. prüft die Shellskripte;
-6. startet das temporäre Setup;
-7. erzeugt `/opt/wams-<uuid>`;
-8. erzeugt ein selbstsigniertes Zertifikat;
-9. richtet eine eigene Apache-Site ein;
-10. prüft die HTTPS-Loginseite;
-11. entfernt temporäre Dateien.
-
-Bei einem Fehler werden die durch diesen Versuch erzeugten Apache-Dateien zurückgerollt.
-
-## Launcher
-
-Der Launcher zeigt nur App-Instanzen, für die der Benutzer das Recht `use` besitzt.
-
-- App-Kacheln enthalten Iconkürzel und Instanzname.
-- Der aktive Tenant wird mit Name und Icon angezeigt.
-- „Tenant wechseln“ erscheint nur bei mindestens zwei lesbaren Tenants.
-- Ohne Apps wird ein einzelner neutraler Leerzustand angezeigt.
-- Administration ist nur für den globalen Administrator sichtbar.
-
-## Tenants
-
-Tenants sind optional. Eine App kann ohne Tenant installiert werden.
-
-Tenant-Icons:
-
-```text
-PNG oder JPEG
-Speicherort: state/icons/
-Auslieferung nur über eine autorisierte Route
-```
-
-## Benutzer, Gruppen und Rechte
-
-Die Benutzeranlage erzeugt nur das Konto. Rechte werden anschließend getrennt vergeben.
-
-Unterstützt werden:
-
-```text
-Tenant-Leserecht an Benutzer
-Tenant-Leserecht an Gruppe
-App-Recht use an Benutzer oder Gruppe
-App-Recht edit an Benutzer oder Gruppe
-Gruppenmitgliedschaften
-```
-
-`use` erlaubt das Öffnen einer App. `edit` erlaubt app-spezifische Verwaltungsfunktionen. Jede Prüfung erfolgt serverseitig.
-
-## App-Katalog
-
-Apps liegen unter:
-
-```text
-applications/<app-id>/
-```
-
-Ein installierbares Manifest benötigt mindestens:
+WAMS erwartet im Repository eine `catalog.json`:
 
 ```json
 {
-  "schemaVersion": 1,
-  "appId": "example",
-  "name": "Example",
-  "version": "1.0.0",
-  "icon": "EX",
-  "catalog": {
-    "discoverable": true,
-    "installable": true,
-    "downloadable": true
-  }
+  "apps": [
+    {
+      "id": "csv-reporting",
+      "name": "CSV Reporting",
+      "directory": "apps/csv-reporting"
+    }
+  ]
 }
 ```
 
-Der App-Katalog zeigt nur Icon und Titel. Nicht installierbare Apps erscheinen nicht.
-
-Eine App erhält beim Aufruf den Kontext `$wams` mit:
+Jeder Katalogeintrag enthält nur:
 
 ```text
-authorized
-canManage
-instanceId
-dataDir
-configFile
+id
+name
+directory
 ```
 
-Der App-Einstiegspunkt ist:
+Die App-Struktur ist fest:
 
 ```text
-applications/<app-id>/public/index.php
+apps/<app-id>/
+├── index.php
+├── admin.php
+├── csv-reporting.json       falls von der App verwendet
+└── weitere Originaldateien
 ```
 
-## App-Dateien, AppConfig und AppData
+`index.php` ist die normale Oberfläche. `admin.php` ist die Adminoberfläche. Beide werden ohne Umbau des App-Codes eingebunden.
+
+## App Store
+
+Der globale Administrator kann:
+
+1. das App-Repository aktualisieren;
+2. Apps aus `catalog.json` anzeigen;
+3. eine App installieren.
+
+Beim Installieren wird das in `directory` angegebene App-Verzeichnis vollständig in eine getrennte Instanz kopiert. WAMS prüft, dass `index.php` und `admin.php` vorhanden sind.
+
+## Benutzer und Rechte
+
+Es gibt nur zwei Benutzertypen:
 
 ```text
-App-Dateien: applications/<app-id>/
-AppConfig:   state/instances/<instance-id>/config.json
-AppData:     state/instances/<instance-id>/data/
-Historie:    state/instances/<instance-id>/history/
+globaler Administrator
+normaler Benutzer
 ```
 
-Diese Bereiche bleiben getrennt. Ein Systemupdate schließt `state`, `runtime`, `backups` und `exports` aus.
+Der globale Administrator kann weitere Benutzer anlegen.
 
-## Privates Repository
-
-Unter **System → Privates Repository** können gespeichert werden:
+Pro installierter App erhält ein Benutzer genau einen dieser Zustände:
 
 ```text
-HTTPS-Repository
-Branch
-Repository-Schlüssel
-Nur AppConfig, nur AppData oder beides
+Kein Zugriff
+App
+App + Admin
 ```
 
-Der Repository-Schlüssel wird mit AES-256-GCM verschlüsselt. Der installationsspezifische Schlüssel liegt unter:
+Weitere Rollen, Gruppen, Tenants oder Einzelrechte gibt es nicht.
+
+## App-Einbindung
+
+WAMS setzt beim App-Aufruf folgende Variablen:
+
+```php
+$webapp_managed = true;
+$webapp_admin = false;
+$webapp_global_admin = false;
+$webapp_user = [];
+$webapp_instance = [];
+$webapp_config_file = '/path/to/csv-reporting.json';
+```
+
+Für die Adminansicht gilt:
+
+```php
+$webapp_admin = true;
+```
+
+Apps können dieses Flag verwenden, müssen es aber nicht. Die Zugangsprüfung erfolgt bereits durch WAMS.
+
+## Overlay
+
+WAMS legt oben rechts ein dezentes Hover-Overlay über die unveränderte App.
+
+Immer vorhanden:
 
 ```text
-state/secret.key
+Zurück
 ```
 
-Git erhält den Schlüssel über `GIT_ASKPASS`. Er wird nicht in der Repository-URL oder Prozessliste ausgegeben.
-
-Synchronisierte Struktur:
+Für App-Administratoren zusätzlich:
 
 ```text
-wams/
-├── manifest.json
-├── config/
-│   └── <instance-id>/config.json
-└── appdata/
-    └── <instance-id>/...
+Admin oder App
+Export
+Import
 ```
 
-Die Synchronisierung läuft als separater systemd-Dienst und wird über SQLite-Aufträge gesteuert.
+`Admin` wechselt zu `admin.php`. `App` wechselt zurück zu `index.php`.
 
-## Updates
+## `csv-reporting.json`
 
-Systemupdates werden in `update_jobs` eingereiht und durch einen root-eigenen systemd-Worker ausgeführt.
+Die Datei kann jederzeit exportiert werden. Der Export wird als `csv-reporting.json` heruntergeladen.
 
-Erhalten bleiben:
+App-Administratoren können eine JSON-Datei importieren. Vor dem Schreiben wird geprüft, dass sie gültiges JSON enthält. Die Datei wird anschließend formatiert und atomar in die App-Instanz geschrieben.
+
+Jede installierte App-Instanz besitzt ihre eigene Datei:
 
 ```text
-state/
-runtime/
-backups/
-exports/
+state/instances/<instance-id>/app/csv-reporting.json
 ```
 
-Damit bleiben Benutzer, Gruppen, Rechte, Tenants, AppConfig, AppData, Zertifikate und Sicherungen erhalten.
+Damit bleiben App-Einstellungen zwischen Benutzern derselben Instanz gemeinsam, aber zwischen verschiedenen Installationen getrennt.
 
-## Backups
-
-Unter **System** kann ein ZIP-Backup des gesamten `state`-Verzeichnisses erzeugt werden. Die Datei wird unter `backups/` gespeichert.
-
-## Alte Installationen
-
-Der Installer sucht unter `/opt` und `/var/www` nach weiteren WAMS-Datenbanken und speichert erkannte Pfade in:
-
-```text
-state/legacy-installations.json
-```
-
-## Dateirechte
-
-Anwendungscode:
-
-```text
-root:www-data
-Ordner 0750
-Dateien 0640
-```
-
-Schreibbereiche:
-
-```text
-www-data:www-data
-Ordner 0770
-Dateien 0660
-```
-
-## Verzeichnisstruktur
+## Dateistruktur
 
 ```text
 web-application-management-system/
-├── applications/
-├── backups/
 ├── config/
-├── exports/
 ├── migrations/
 ├── public/
+│   ├── assets/
+│   ├── index.php
+│   └── setup.php
 ├── resources/
-├── runtime/
 ├── src/
 ├── state/
-├── tests/
-├── bootstrap.php
 ├── install.sh
-├── repository-sync-worker.php
-├── uninstall.sh
-├── update-worker.sh
+├── LICENSE
+├── README.md
 └── VERSION
 ```
 
-## Prüfung
+## Sicherheit
 
-Vor Veröffentlichung müssen erfolgreich sein:
-
-```text
-PHP-Lint aller PHP-Dateien
-Shell-Syntax aller Shellskripte
-JSON-Validierung
-Repository-Vertragstest
-Apache-Preflight
-HTTPS-Selbsttest
-ZIP-Integritätstest
-```
-
-Der Installer wiederholt PHP- und Shell-Prüfungen auf dem Zielserver, bevor das Web-Setup startet.
+- Argon2id-Passwort-Hashes
+- CSRF-Prüfung für schreibende Aktionen
+- serverseitige Zugangsprüfung
+- Prepared Statements für SQLite
+- Validierung der App-ID und Repositorypfade
+- keine Pfadtraversierung aus `catalog.json`
+- JSON-Prüfung beim Import
+- HTTPS mit selbstsigniertem Startzertifikat
+- App-Instanzen außerhalb des DocumentRoot
