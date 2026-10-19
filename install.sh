@@ -17,7 +17,7 @@ apache_port_free(){ ! grep -RhsE '^[[:space:]]*Listen[[:space:]]+' /etc/apache2 
 while ! port_socket_free "$SETUP_PORT";do SETUP_PORT=$((SETUP_PORT+1));done
 while ! port_socket_free "$APP_PORT"||! apache_port_free "$APP_PORT"||[ "$APP_PORT" -eq "$SETUP_PORT" ];do APP_PORT=$((APP_PORT+1));done
 GIT_TERMINAL_PROMPT=0 git clone --depth 1 "$REPOSITORY" "$BOOT/repo"
-"$BOOT/repo/vendor-csv-reporting.sh"
+bash "$BOOT/repo/vendor-csv-reporting.sh"
 while IFS= read -r -d '' f;do php -l "$f" >/dev/null;done < <(find "$BOOT/repo" -type f -name '*.php' -print0)
 bash -n "$BOOT/repo/install.sh";bash -n "$BOOT/repo/uninstall.sh"
 TOKEN="$(openssl rand -hex 24)";mkdir -p "$BOOT/repo/runtime";printf '{"token":"%s","appPort":%s}\n' "$TOKEN" "$APP_PORT" > "$BOOT/repo/runtime/probe.json"

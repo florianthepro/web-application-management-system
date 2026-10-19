@@ -1058,3 +1058,8 @@ Unter **System → Privates Repository** kann ein HTTPS-Git-Repository mit Branc
 Während der Installation wird `https://github.com/florianthepro/csv-reporting` direkt geklont. `index.php`, `map.php`, `rules.php`, `check.php`, `auto-download.php`, README und Lizenz werden unverändert nach `applications/csv-reporting/upstream/` übernommen und der verwendete Commit in `UPSTREAM_COMMIT` festgehalten.
 
 WAMS verändert den Upstream-Code nicht. Ein Adapter stellt Authentifizierung, `use`- und `edit`-Rechte, den Instanzkontext und die Live-CSV bereit. Ein getrenntes Overlay ergänzt ausschließlich den Rückkehrbutton und passt die relativen Links und Formularziele an den WAMS-Router an. Die Remote-CSV wird nur für den aktuellen Request als `csv.csv` bereitgestellt und anschließend entfernt. Regeln und Original-Appdateien bleiben im AppData-Verzeichnis der Instanz bestehen.
+
+
+## 28. Vendor-Skript-Aufruf ab Version 4.0.1
+
+Das CSV-Reporting-Vendor-Skript wird im Installer und Update-Worker ausdrücklich mit `bash` gestartet. Die Installation hängt dadurch nicht vom in Git gespeicherten Executable-Bit ab.
