@@ -1,0 +1,19 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "title":"CSV Reporting Installation",
+  "type":"object",
+  "required":["remoteUrl","title","heading"],
+  "properties":{
+    "remoteUrl":{"type":"string","format":"uri","title":"Remote-CSV-URL","description":"Wird bei jedem Seitenaufruf live abgerufen und nicht lokal gespeichert."},
+    "httpMethod":{"type":"string","enum":["GET","POST"],"default":"GET","title":"HTTP-Methode"},
+    "postField":{"type":"string","default":"downloadBtn","title":"POST-Feld"},
+    "postValue":{"type":"string","default":"1","title":"POST-Wert"},
+    "title":{"type":"string","default":"CSV Reporting","title":"Seitentitel"},
+    "heading":{"type":"string","default":"CSV Reporting","title":"Überschrift"},
+    "delimiter":{"type":"string","enum":[",",";","\\t"],"default":",","title":"CSV-Trennzeichen"},
+    "refreshSeconds":{"type":"integer","minimum":0,"maximum":86400,"default":0,"title":"Automatische Seitenaktualisierung in Sekunden"},
+    "timeoutSeconds":{"type":"integer","minimum":2,"maximum":60,"default":20,"title":"Remote-Timeout in Sekunden"},
+    "hasHeader":{"type":"boolean","default":true,"title":"Erste Zeile enthält Spaltennamen"}
+  },
+  "additionalProperties":false
+}

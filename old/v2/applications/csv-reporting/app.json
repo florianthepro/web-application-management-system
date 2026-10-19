@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "appId": "csv-reporting",
+  "name": "CSV Reporting",
+  "version": "1.0.0",
+  "description": "Remote CSV-Daten live anzeigen, filtern und auswerten, ohne sie lokal zu speichern.",
+  "catalog": {"discoverable": true, "installable": true, "downloadable": true},
+  "entryPoint": "public/index.php",
+  "multiInstance": true,
+  "tenantMode": "optional",
+  "configurationSchema": "app-config.schema.json",
+  "versionsIndex": "versions/index.json",
+  "stylesIndex": "styles/index.json",
+  "permissions": [
+    {"id":"csv-reporting.view","name":"CSV Reporting verwenden","kind":"use"},
+    {"id":"csv-reporting.manage","name":"CSV Reporting verwalten","kind":"manage"}
+  ],
+  "integration": {"sharedSession":true,"identityContext":["user","groups","tenant"],"managementOverlay":true},
+  "remoteData": {"mode":"live","persistResponse":false,"validateDuringInstall":true}
+}

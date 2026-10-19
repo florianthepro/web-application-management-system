@@ -1,0 +1,15 @@
+<VirtualHost *:__PORT__>
+ ServerName localhost
+ DocumentRoot __ROOT__/public
+ <Directory __ROOT__/public>
+  AllowOverride None
+  Options -Indexes
+  Require all granted
+  DirectoryIndex index.php
+ </Directory>
+ <Directory __ROOT__/state>
+  Require all denied
+ </Directory>
+ ErrorLog ${APACHE_LOG_DIR}/__SLUG__-error.log
+ CustomLog ${APACHE_LOG_DIR}/__SLUG__-access.log combined
+</VirtualHost>
