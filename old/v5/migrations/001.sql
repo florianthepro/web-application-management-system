@@ -1,9 +1,0 @@
-CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY,username TEXT UNIQUE NOT NULL,email TEXT UNIQUE NOT NULL,password_hash TEXT NOT NULL,is_global INTEGER NOT NULL DEFAULT 0,active INTEGER NOT NULL DEFAULT 1,created_at TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS tenants(id TEXT PRIMARY KEY,name TEXT NOT NULL,created_at TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS user_tenants(user_id TEXT NOT NULL,tenant_id TEXT NOT NULL,PRIMARY KEY(user_id,tenant_id));
-CREATE TABLE IF NOT EXISTS groups(id TEXT PRIMARY KEY,tenant_id TEXT NOT NULL,name TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS group_users(group_id TEXT NOT NULL,user_id TEXT NOT NULL,PRIMARY KEY(group_id,user_id));
-CREATE TABLE IF NOT EXISTS app_instances(id TEXT PRIMARY KEY,tenant_id TEXT NOT NULL,app_id TEXT NOT NULL,name TEXT NOT NULL,version TEXT NOT NULL,created_at TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS app_access(id TEXT PRIMARY KEY,instance_id TEXT NOT NULL,subject_type TEXT NOT NULL,subject_id TEXT NOT NULL DEFAULT '',permission TEXT NOT NULL,created_at TEXT NOT NULL);
-CREATE UNIQUE INDEX IF NOT EXISTS app_access_unique ON app_access(instance_id,subject_type,subject_id,permission);
-CREATE TABLE IF NOT EXISTS audit(id TEXT PRIMARY KEY,created_at TEXT NOT NULL,user_id TEXT,event TEXT NOT NULL,data TEXT NOT NULL);
